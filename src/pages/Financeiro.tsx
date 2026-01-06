@@ -1,11 +1,9 @@
 import { useState } from "react";
 import {
-  Plus,
   ArrowUpRight,
   ArrowDownLeft,
   TrendingUp,
   Search,
-  Filter,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -14,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { TransactionModal } from "@/components/modals/TransactionModal";
 
 interface Transaction {
   id: string;
@@ -92,6 +91,8 @@ const formatCurrency = (value: number) => {
 export default function Financeiro() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("todas");
+  const [incomeModalOpen, setIncomeModalOpen] = useState(false);
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
 
   const totalEntradas = mockTransactions
     .filter((t) => t.type === "entrada" && t.status === "confirmado")
@@ -126,11 +127,11 @@ export default function Financeiro() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setExpenseModalOpen(true)}>
               <ArrowDownLeft className="h-4 w-4 text-destructive" />
               Nova Saída
             </Button>
-            <Button className="gap-2 bg-success hover:bg-success/90">
+            <Button className="gap-2 bg-success hover:bg-success/90" onClick={() => setIncomeModalOpen(true)}>
               <ArrowUpRight className="h-4 w-4" />
               Nova Entrada
             </Button>
@@ -251,6 +252,9 @@ export default function Financeiro() {
           </CardContent>
         </Card>
       </div>
+
+      <TransactionModal open={incomeModalOpen} onOpenChange={setIncomeModalOpen} type="entrada" />
+      <TransactionModal open={expenseModalOpen} onOpenChange={setExpenseModalOpen} type="saida" />
     </MainLayout>
   );
 }
