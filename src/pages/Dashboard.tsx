@@ -1,9 +1,9 @@
-import { Users, GraduationCap, Calendar, Wallet } from "lucide-react";
+import { Users, GraduationCap, Calendar } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { RecentLessons } from "@/components/dashboard/RecentLessons";
-import { FinancialSummary } from "@/components/dashboard/FinancialSummary";
 import { WeeklySchedule } from "@/components/dashboard/WeeklySchedule";
+import { WeeklyAgenda } from "@/components/dashboard/WeeklyAgenda";
 
 export default function Dashboard() {
   return (
@@ -20,7 +20,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             title="Total de Alunos"
             value={42}
@@ -41,13 +41,6 @@ export default function Dashboard() {
             icon={Calendar}
             trend={{ value: 8, isPositive: true }}
           />
-          <StatCard
-            title="Lucro do Mês"
-            value="R$ 8.300"
-            icon={Wallet}
-            trend={{ value: 15, isPositive: true }}
-            variant="success"
-          />
         </div>
 
         {/* Main Content Grid */}
@@ -56,10 +49,12 @@ export default function Dashboard() {
             <RecentLessons />
           </div>
           <div className="space-y-6">
-            <FinancialSummary />
-            <WeeklySchedule />
+            <WeeklyAgenda />
           </div>
         </div>
+
+        {/* Weekly Chart */}
+        <WeeklySchedule />
       </div>
     </MainLayout>
   );

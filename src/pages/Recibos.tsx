@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ReceiptModal } from "@/components/modals/ReceiptModal";
+import { toast } from "sonner";
 
 interface ReceiptData {
   id: string;
@@ -69,12 +71,25 @@ const formatCurrency = (value: number) => {
 
 export default function Recibos() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredReceipts = mockReceipts.filter(
     (receipt) =>
       receipt.student.toLowerCase().includes(searchTerm.toLowerCase()) ||
       receipt.number.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleView = (receipt: ReceiptData) => {
+    toast.info(`Visualizando recibo ${receipt.number}`);
+  };
+
+  const handlePrint = (receipt: ReceiptData) => {
+    toast.success(`Imprimindo recibo ${receipt.number}`);
+  };
+
+  const handleDownload = (receipt: ReceiptData) => {
+    toast.success(`Download do recibo ${receipt.number} iniciado`);
+  };
 
   return (
     <MainLayout>
@@ -87,7 +102,7 @@ export default function Recibos() {
               Gere e imprima recibos de pagamento
             </p>
           </div>
-          <Button className="gap-2 bg-primary hover:bg-primary/90">
+          <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={() => setIsModalOpen(true)}>
             <Plus className="h-4 w-4" />
             Novo Recibo
           </Button>
@@ -156,13 +171,13 @@ export default function Recibos() {
                         </p>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" title="Visualizar">
+                        <Button variant="ghost" size="icon" title="Visualizar" onClick={() => handleView(receipt)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" title="Imprimir">
+                        <Button variant="ghost" size="icon" title="Imprimir" onClick={() => handlePrint(receipt)}>
                           <Printer className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" title="Download">
+                        <Button variant="ghost" size="icon" title="Download" onClick={() => handleDownload(receipt)}>
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>
@@ -174,6 +189,8 @@ export default function Recibos() {
           </CardContent>
         </Card>
       </div>
+
+      <ReceiptModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </MainLayout>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { TeacherModal } from "@/components/modals/TeacherModal";
 
 interface Teacher {
   id: string;
@@ -69,6 +70,7 @@ const mockTeachers: Teacher[] = [
 
 export default function Professores() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredTeachers = mockTeachers.filter((teacher) =>
     teacher.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -85,7 +87,7 @@ export default function Professores() {
               Gerencie os professores e suas aulas
             </p>
           </div>
-          <Button className="gap-2 bg-primary hover:bg-primary/90">
+          <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={() => setIsModalOpen(true)}>
             <Plus className="h-4 w-4" />
             Novo Professor
           </Button>
@@ -182,6 +184,8 @@ export default function Professores() {
           ))}
         </div>
       </div>
+
+      <TeacherModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </MainLayout>
   );
 }

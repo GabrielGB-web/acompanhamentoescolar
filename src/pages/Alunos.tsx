@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { StudentModal } from "@/components/modals/StudentModal";
 
 interface Student {
   id: string;
@@ -63,6 +64,7 @@ const mockStudents: Student[] = [
 
 export default function Alunos() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredStudents = mockStudents.filter((student) =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -79,7 +81,7 @@ export default function Alunos() {
               Gerencie os alunos matriculados na escola
             </p>
           </div>
-          <Button className="gap-2 bg-primary hover:bg-primary/90">
+          <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={() => setIsModalOpen(true)}>
             <Plus className="h-4 w-4" />
             Novo Aluno
           </Button>
@@ -163,6 +165,8 @@ export default function Alunos() {
           ))}
         </div>
       </div>
+
+      <StudentModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </MainLayout>
   );
 }

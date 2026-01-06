@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LessonModal } from "@/components/modals/LessonModal";
 
 interface Lesson {
   id: string;
@@ -90,6 +91,7 @@ const statusStyles = {
 export default function Aulas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("todas");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredLessons = mockLessons.filter((lesson) => {
     const matchesSearch =
@@ -112,7 +114,7 @@ export default function Aulas() {
               Gerencie o agendamento de aulas
             </p>
           </div>
-          <Button className="gap-2 bg-primary hover:bg-primary/90">
+          <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={() => setIsModalOpen(true)}>
             <Plus className="h-4 w-4" />
             Agendar Aula
           </Button>
@@ -195,6 +197,8 @@ export default function Aulas() {
           </CardContent>
         </Card>
       </div>
+
+      <LessonModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </MainLayout>
   );
 }
