@@ -10,6 +10,7 @@ export interface Student {
   grade: string | null;
   responsible_name: string | null;
   responsible_phone: string | null;
+  access_code: string | null;
   created_at: string;
   updated_at: string;
 }
