@@ -171,6 +171,7 @@ export type Database = {
       }
       students: {
         Row: {
+          access_code: string | null
           created_at: string
           email: string | null
           grade: string | null
@@ -182,6 +183,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_code?: string | null
           created_at?: string
           email?: string | null
           grade?: string | null
@@ -193,6 +195,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_code?: string | null
           created_at?: string
           email?: string | null
           grade?: string | null
@@ -291,6 +294,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_access_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -1,4 +1,5 @@
-import { Save, User, Building, Bell, Shield } from "lucide-react";
+import { useState } from "react";
+import { Save, User, Building, Bell, Shield, UserPlus, Users } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { CreateUserModal } from "@/components/modals/CreateUserModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Configuracoes() {
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const { isAdmin } = useAuth();
   return (
     <MainLayout>
       <div className="animate-fade-in space-y-6">
@@ -176,6 +181,40 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+
+          {/* User Management - Admin Only */}
+          {isAdmin && (
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Gerenciar Usuários
+                </CardTitle>
+                <CardDescription>
+                  Criar e gerenciar usuários do sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Criar Novo Usuário</p>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione administradores ou professores
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2"
+                    onClick={() => setIsCreateUserModalOpen(true)}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Novo Usuário
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Save Button */}
@@ -186,6 +225,11 @@ export default function Configuracoes() {
           </Button>
         </div>
       </div>
+
+      <CreateUserModal 
+        open={isCreateUserModalOpen} 
+        onOpenChange={setIsCreateUserModalOpen} 
+      />
     </MainLayout>
   );
 }

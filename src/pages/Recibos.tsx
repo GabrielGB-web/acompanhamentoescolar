@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ReceiptModal } from "@/components/modals/ReceiptModal";
-import { useReceipts } from "@/hooks/useReceipts";
-import { toast } from "sonner";
+import { ReceiptViewModal } from "@/components/modals/ReceiptViewModal";
+import { useReceipts, Receipt as ReceiptType } from "@/hooks/useReceipts";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -21,6 +21,7 @@ const formatCurrency = (value: number) => {
 export default function Recibos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewReceipt, setViewReceipt] = useState<ReceiptType | null>(null);
 
   const { data: receipts = [], isLoading } = useReceipts();
 
@@ -30,16 +31,16 @@ export default function Recibos() {
       receipt.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleView = (receipt: typeof receipts[0]) => {
-    toast.info(`Visualizando recibo ${receipt.receipt_number}`);
+  const handleView = (receipt: ReceiptType) => {
+    setViewReceipt(receipt);
   };
 
-  const handlePrint = (receipt: typeof receipts[0]) => {
-    toast.success(`Imprimindo recibo ${receipt.receipt_number}`);
+  const handlePrint = (receipt: ReceiptType) => {
+    setViewReceipt(receipt);
   };
 
-  const handleDownload = (receipt: typeof receipts[0]) => {
-    toast.success(`Download do recibo ${receipt.receipt_number} iniciado`);
+  const handleDownload = (receipt: ReceiptType) => {
+    setViewReceipt(receipt);
   };
 
   return (
@@ -142,6 +143,11 @@ export default function Recibos() {
       </div>
 
       <ReceiptModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+      <ReceiptViewModal 
+        receipt={viewReceipt} 
+        open={!!viewReceipt} 
+        onOpenChange={(open) => !open && setViewReceipt(null)} 
+      />
     </MainLayout>
   );
 }

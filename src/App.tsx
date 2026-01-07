@@ -13,6 +13,7 @@ import Financeiro from "./pages/Financeiro";
 import Recibos from "./pages/Recibos";
 import Configuracoes from "./pages/Configuracoes";
 import Auth from "./pages/Auth";
+import AgendaPublica from "./pages/AgendaPublica";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
