@@ -6,61 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ReceiptModal } from "@/components/modals/ReceiptModal";
+import { useReceipts } from "@/hooks/useReceipts";
 import { toast } from "sonner";
-
-interface ReceiptData {
-  id: string;
-  number: string;
-  student: string;
-  description: string;
-  amount: number;
-  date: string;
-  paymentMethod: string;
-  status: "pago" | "pendente";
-}
-
-const mockReceipts: ReceiptData[] = [
-  {
-    id: "1",
-    number: "REC-2026-001",
-    student: "Maria Silva",
-    description: "Mensalidade Janeiro/2026",
-    amount: 450,
-    date: "06/01/2026",
-    paymentMethod: "PIX",
-    status: "pago",
-  },
-  {
-    id: "2",
-    number: "REC-2026-002",
-    student: "Pedro Santos",
-    description: "Mensalidade Janeiro/2026",
-    amount: 350,
-    date: "05/01/2026",
-    paymentMethod: "Cartão",
-    status: "pago",
-  },
-  {
-    id: "3",
-    number: "REC-2026-003",
-    student: "Ana Costa",
-    description: "Mensalidade Janeiro/2026",
-    amount: 400,
-    date: "04/01/2026",
-    paymentMethod: "Boleto",
-    status: "pendente",
-  },
-  {
-    id: "4",
-    number: "REC-2026-004",
-    student: "Lucas Oliveira",
-    description: "Mensalidade Janeiro/2026",
-    amount: 500,
-    date: "03/01/2026",
-    paymentMethod: "Dinheiro",
-    status: "pago",
-  },
-];
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -73,22 +22,24 @@ export default function Recibos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filteredReceipts = mockReceipts.filter(
+  const { data: receipts = [], isLoading } = useReceipts();
+
+  const filteredReceipts = receipts.filter(
     (receipt) =>
-      receipt.student.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      receipt.number.toLowerCase().includes(searchTerm.toLowerCase())
+      receipt.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      receipt.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleView = (receipt: ReceiptData) => {
-    toast.info(`Visualizando recibo ${receipt.number}`);
+  const handleView = (receipt: typeof receipts[0]) => {
+    toast.info(`Visualizando recibo ${receipt.receipt_number}`);
   };
 
-  const handlePrint = (receipt: ReceiptData) => {
-    toast.success(`Imprimindo recibo ${receipt.number}`);
+  const handlePrint = (receipt: typeof receipts[0]) => {
+    toast.success(`Imprimindo recibo ${receipt.receipt_number}`);
   };
 
-  const handleDownload = (receipt: ReceiptData) => {
-    toast.success(`Download do recibo ${receipt.number} iniciado`);
+  const handleDownload = (receipt: typeof receipts[0]) => {
+    toast.success(`Download do recibo ${receipt.receipt_number} iniciado`);
   };
 
   return (
@@ -129,9 +80,15 @@ export default function Recibos() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {filteredReceipts.length === 0 ? (
+              {isLoading ? (
                 <div className="p-8 text-center text-muted-foreground">
-                  Nenhum recibo encontrado
+                  Carregando...
+                </div>
+              ) : filteredReceipts.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  {searchTerm 
+                    ? "Nenhum recibo encontrado" 
+                    : "Nenhum recibo gerado. Clique em 'Novo Recibo' para começar."}
                 </div>
               ) : (
                 filteredReceipts.map((receipt) => (
@@ -145,29 +102,23 @@ export default function Recibos() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold">{receipt.number}</p>
-                          <Badge
-                            className={
-                              receipt.status === "pago"
-                                ? "bg-success/10 text-success"
-                                : "bg-warning/10 text-warning"
-                            }
-                          >
-                            {receipt.status}
+                          <p className="font-semibold">{receipt.receipt_number}</p>
+                          <Badge className="bg-success/10 text-success">
+                            pago
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {receipt.student} • {receipt.description}
+                          {receipt.student_name} • {receipt.description}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="font-bold text-success">
-                          {formatCurrency(receipt.amount)}
+                          {formatCurrency(Number(receipt.amount))}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {receipt.date} • {receipt.paymentMethod}
+                          {format(parseISO(receipt.date), "dd/MM/yyyy", { locale: ptBR })}
                         </p>
                       </div>
                       <div className="flex gap-1">

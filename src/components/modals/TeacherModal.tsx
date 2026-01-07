@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
+import { useCreateTeacher } from "@/hooks/useTeachers";
 
 interface TeacherModalProps {
   open: boolean;
@@ -31,6 +31,8 @@ export function TeacherModal({ open, onOpenChange }: TeacherModalProps) {
     subjects: [] as string[],
   });
 
+  const createTeacher = useCreateTeacher();
+
   const handleSubjectChange = (subject: string, checked: boolean) => {
     if (checked) {
       setFormData({ ...formData, subjects: [...formData.subjects, subject] });
@@ -41,10 +43,18 @@ export function TeacherModal({ open, onOpenChange }: TeacherModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implementar salvamento no banco de dados
-    toast.success("Professor cadastrado com sucesso!");
-    onOpenChange(false);
-    setFormData({ name: "", email: "", phone: "", subjects: [] });
+    
+    createTeacher.mutate({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      subjects: formData.subjects,
+    }, {
+      onSuccess: () => {
+        onOpenChange(false);
+        setFormData({ name: "", email: "", phone: "", subjects: [] });
+      },
+    });
   };
 
   return (
@@ -114,7 +124,9 @@ export function TeacherModal({ open, onOpenChange }: TeacherModalProps) {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">Cadastrar Professor</Button>
+            <Button type="submit" disabled={createTeacher.isPending}>
+              {createTeacher.isPending ? "Salvando..." : "Cadastrar Professor"}
+            </Button>
           </div>
         </form>
       </DialogContent>

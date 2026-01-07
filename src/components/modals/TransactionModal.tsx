@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+import { useCreateTransaction } from "@/hooks/useTransactions";
 
 interface TransactionModalProps {
   open: boolean;
@@ -25,14 +25,24 @@ export function TransactionModal({ open, onOpenChange, type }: TransactionModalP
     notes: "",
   });
 
+  const createTransaction = useCreateTransaction();
   const categories = type === "entrada" ? incomeCategories : expenseCategories;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implementar salvamento no banco de dados
-    toast.success(type === "entrada" ? "Entrada registrada com sucesso!" : "Saída registrada com sucesso!");
-    onOpenChange(false);
-    setFormData({ description: "", amount: "", category: "", date: new Date().toISOString().split("T")[0], notes: "" });
+    
+    createTransaction.mutate({
+      type,
+      description: formData.description,
+      amount: parseFloat(formData.amount),
+      category: formData.category,
+      date: formData.date,
+    }, {
+      onSuccess: () => {
+        onOpenChange(false);
+        setFormData({ description: "", amount: "", category: "", date: new Date().toISOString().split("T")[0], notes: "" });
+      },
+    });
   };
 
   return (
@@ -115,8 +125,12 @@ export function TransactionModal({ open, onOpenChange, type }: TransactionModalP
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" className={type === "entrada" ? "bg-success hover:bg-success/90" : ""}>
-              Registrar {type === "entrada" ? "Entrada" : "Saída"}
+            <Button 
+              type="submit" 
+              className={type === "entrada" ? "bg-success hover:bg-success/90" : ""}
+              disabled={createTransaction.isPending}
+            >
+              {createTransaction.isPending ? "Salvando..." : `Registrar ${type === "entrada" ? "Entrada" : "Saída"}`}
             </Button>
           </div>
         </form>
