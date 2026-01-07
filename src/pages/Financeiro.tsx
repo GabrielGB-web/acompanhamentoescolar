@@ -13,73 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TransactionModal } from "@/components/modals/TransactionModal";
-
-interface Transaction {
-  id: string;
-  description: string;
-  amount: number;
-  type: "entrada" | "saida";
-  category: string;
-  date: string;
-  status: "confirmado" | "pendente";
-}
-
-const mockTransactions: Transaction[] = [
-  {
-    id: "1",
-    description: "Mensalidade - Maria Silva",
-    amount: 450,
-    type: "entrada",
-    category: "Mensalidade",
-    date: "06/01/2026",
-    status: "confirmado",
-  },
-  {
-    id: "2",
-    description: "Mensalidade - Pedro Santos",
-    amount: 350,
-    type: "entrada",
-    category: "Mensalidade",
-    date: "05/01/2026",
-    status: "confirmado",
-  },
-  {
-    id: "3",
-    description: "Pagamento Prof. João",
-    amount: 1200,
-    type: "saida",
-    category: "Salário",
-    date: "05/01/2026",
-    status: "confirmado",
-  },
-  {
-    id: "4",
-    description: "Material Didático",
-    amount: 280,
-    type: "saida",
-    category: "Material",
-    date: "04/01/2026",
-    status: "confirmado",
-  },
-  {
-    id: "5",
-    description: "Mensalidade - Ana Costa",
-    amount: 400,
-    type: "entrada",
-    category: "Mensalidade",
-    date: "04/01/2026",
-    status: "pendente",
-  },
-  {
-    id: "6",
-    description: "Conta de Luz",
-    amount: 320,
-    type: "saida",
-    category: "Despesas Fixas",
-    date: "03/01/2026",
-    status: "confirmado",
-  },
-];
+import { useTransactions } from "@/hooks/useTransactions";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -94,17 +30,19 @@ export default function Financeiro() {
   const [incomeModalOpen, setIncomeModalOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
 
-  const totalEntradas = mockTransactions
-    .filter((t) => t.type === "entrada" && t.status === "confirmado")
-    .reduce((sum, t) => sum + t.amount, 0);
+  const { data: transactions = [], isLoading } = useTransactions();
 
-  const totalSaidas = mockTransactions
-    .filter((t) => t.type === "saida" && t.status === "confirmado")
-    .reduce((sum, t) => sum + t.amount, 0);
+  const totalEntradas = transactions
+    .filter((t) => t.type === "entrada")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const totalSaidas = transactions
+    .filter((t) => t.type === "saida")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const lucro = totalEntradas - totalSaidas;
 
-  const filteredTransactions = mockTransactions.filter((transaction) => {
+  const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch = transaction.description
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
@@ -157,7 +95,6 @@ export default function Financeiro() {
             value={formatCurrency(lucro)}
             icon={TrendingUp}
             variant="primary"
-            trend={{ value: 15, isPositive: true }}
           />
         </div>
 
@@ -191,9 +128,15 @@ export default function Financeiro() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {filteredTransactions.length === 0 ? (
+              {isLoading ? (
                 <div className="p-8 text-center text-muted-foreground">
-                  Nenhuma transação encontrada
+                  Carregando...
+                </div>
+              ) : filteredTransactions.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  {searchTerm || activeTab !== "todas" 
+                    ? "Nenhuma transação encontrada" 
+                    : "Nenhuma transação registrada. Adicione uma entrada ou saída."}
                 </div>
               ) : (
                 filteredTransactions.map((transaction) => (
@@ -218,7 +161,7 @@ export default function Financeiro() {
                       <div>
                         <p className="font-medium">{transaction.description}</p>
                         <p className="text-sm text-muted-foreground">
-                          {transaction.category} • {transaction.date}
+                          {transaction.category} • {format(parseISO(transaction.date), "dd/MM/yyyy", { locale: ptBR })}
                         </p>
                       </div>
                     </div>
@@ -232,17 +175,11 @@ export default function Financeiro() {
                           }`}
                         >
                           {transaction.type === "entrada" ? "+" : "-"}
-                          {formatCurrency(transaction.amount)}
+                          {formatCurrency(Number(transaction.amount))}
                         </p>
                       </div>
-                      <Badge
-                        className={
-                          transaction.status === "confirmado"
-                            ? "bg-success/10 text-success"
-                            : "bg-warning/10 text-warning"
-                        }
-                      >
-                        {transaction.status}
+                      <Badge className="bg-success/10 text-success">
+                        confirmado
                       </Badge>
                     </div>
                   </div>

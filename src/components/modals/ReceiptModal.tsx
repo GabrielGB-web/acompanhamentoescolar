@@ -4,31 +4,53 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
+import { useStudents } from "@/hooks/useStudents";
+import { useCreateReceipt } from "@/hooks/useReceipts";
 
 interface ReceiptModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const mockStudents = ["Maria Silva", "Pedro Santos", "Ana Costa", "Lucas Oliveira"];
 const paymentMethods = ["PIX", "Dinheiro", "Cartão de Crédito", "Cartão de Débito", "Boleto", "Transferência"];
 
 export function ReceiptModal({ open, onOpenChange }: ReceiptModalProps) {
   const [formData, setFormData] = useState({
-    student: "",
+    student_id: "",
+    student_name: "",
     description: "",
     amount: "",
     paymentMethod: "",
     date: new Date().toISOString().split("T")[0],
   });
 
+  const { data: students = [] } = useStudents();
+  const createReceipt = useCreateReceipt();
+
+  const handleStudentChange = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    setFormData({ 
+      ...formData, 
+      student_id: studentId,
+      student_name: student?.name || "",
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implementar salvamento no banco de dados
-    toast.success("Recibo gerado com sucesso!");
-    onOpenChange(false);
-    setFormData({ student: "", description: "", amount: "", paymentMethod: "", date: new Date().toISOString().split("T")[0] });
+    
+    createReceipt.mutate({
+      student_id: formData.student_id || undefined,
+      student_name: formData.student_name,
+      description: formData.description,
+      amount: parseFloat(formData.amount),
+      date: formData.date,
+    }, {
+      onSuccess: () => {
+        onOpenChange(false);
+        setFormData({ student_id: "", student_name: "", description: "", amount: "", paymentMethod: "", date: new Date().toISOString().split("T")[0] });
+      },
+    });
   };
 
   return (
@@ -41,18 +63,24 @@ export function ReceiptModal({ open, onOpenChange }: ReceiptModalProps) {
           <div className="space-y-2">
             <Label>Aluno</Label>
             <Select
-              value={formData.student}
-              onValueChange={(value) => setFormData({ ...formData, student: value })}
+              value={formData.student_id}
+              onValueChange={handleStudentChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o aluno" />
               </SelectTrigger>
               <SelectContent>
-                {mockStudents.map((student) => (
-                  <SelectItem key={student} value={student}>
-                    {student}
+                {students.length === 0 ? (
+                  <SelectItem value="none" disabled>
+                    Nenhum aluno cadastrado
                   </SelectItem>
-                ))}
+                ) : (
+                  students.map((student) => (
+                    <SelectItem key={student.id} value={student.id}>
+                      {student.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -117,7 +145,9 @@ export function ReceiptModal({ open, onOpenChange }: ReceiptModalProps) {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">Gerar Recibo</Button>
+            <Button type="submit" disabled={createReceipt.isPending}>
+              {createReceipt.isPending ? "Gerando..." : "Gerar Recibo"}
+            </Button>
           </div>
         </form>
       </DialogContent>

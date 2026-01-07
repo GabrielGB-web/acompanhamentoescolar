@@ -11,70 +11,55 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { TeacherModal } from "@/components/modals/TeacherModal";
-
-interface Teacher {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  subjects: string[];
-  lessonsThisMonth: number;
-  maxLessons: number;
-  status: "ativo" | "inativo";
-}
-
-const mockTeachers: Teacher[] = [
-  {
-    id: "1",
-    name: "Prof. João Mendes",
-    email: "joao.mendes@email.com",
-    phone: "(63) 99888-1234",
-    subjects: ["Matemática", "Física"],
-    lessonsThisMonth: 32,
-    maxLessons: 40,
-    status: "ativo",
-  },
-  {
-    id: "2",
-    name: "Prof. Ana Paula",
-    email: "ana.paula@email.com",
-    phone: "(63) 99888-5678",
-    subjects: ["Português", "Literatura"],
-    lessonsThisMonth: 28,
-    maxLessons: 35,
-    status: "ativo",
-  },
-  {
-    id: "3",
-    name: "Prof. Carlos Lima",
-    email: "carlos.lima@email.com",
-    phone: "(63) 99888-9012",
-    subjects: ["Química"],
-    lessonsThisMonth: 18,
-    maxLessons: 30,
-    status: "ativo",
-  },
-  {
-    id: "4",
-    name: "Prof. Fernanda Rocha",
-    email: "fernanda.rocha@email.com",
-    phone: "(63) 99888-3456",
-    subjects: ["Biologia", "Ciências"],
-    lessonsThisMonth: 0,
-    maxLessons: 25,
-    status: "inativo",
-  },
-];
+import { useTeachers, useDeleteTeacher } from "@/hooks/useTeachers";
+import { useLessons } from "@/hooks/useLessons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Professores() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filteredTeachers = mockTeachers.filter((teacher) =>
+  const { data: teachers = [], isLoading } = useTeachers();
+  const { data: lessons = [] } = useLessons();
+  const deleteTeacher = useDeleteTeacher();
+
+  // Count lessons per teacher this month
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const getLessonsCount = (teacherId: string) => {
+    return lessons.filter((lesson) => {
+      const lessonDate = new Date(lesson.date);
+      return (
+        lesson.teacher_id === teacherId &&
+        lessonDate >= startOfMonth &&
+        lessonDate <= endOfMonth
+      );
+    }).length;
+  };
+
+  const filteredTeachers = teachers.filter((teacher) =>
     teacher.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const confirmDelete = () => {
+    if (deletingId) {
+      deleteTeacher.mutate(deletingId);
+      setDeletingId(null);
+    }
+  };
 
   return (
     <MainLayout>
@@ -105,87 +90,106 @@ export default function Professores() {
         </div>
 
         {/* Teachers Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredTeachers.map((teacher) => (
-            <Card
-              key={teacher.id}
-              className="shadow-card transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-lg font-bold text-secondary-foreground">
-                      {teacher.name.split(" ")[1]?.charAt(0) || teacher.name.charAt(0)}
+        {isLoading ? (
+          <div className="text-center text-muted-foreground py-8">Carregando...</div>
+        ) : filteredTeachers.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            {searchTerm ? "Nenhum professor encontrado" : "Nenhum professor cadastrado. Clique em 'Novo Professor' para começar."}
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredTeachers.map((teacher) => {
+              const lessonsCount = getLessonsCount(teacher.id);
+              return (
+                <Card
+                  key={teacher.id}
+                  className="shadow-card transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-lg font-bold text-secondary-foreground">
+                          {teacher.name.charAt(0)}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{teacher.name}</h3>
+                          <Badge className="bg-success/10 text-success">
+                            ativo
+                          </Badge>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>Editar</DropdownMenuItem>
+                          <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => setDeletingId(teacher.id)}
+                          >
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <div>
-                      <h3 className="font-semibold">{teacher.name}</h3>
-                      <Badge
-                        className={
-                          teacher.status === "ativo"
-                            ? "bg-success/10 text-success"
-                            : "bg-muted text-muted-foreground"
-                        }
-                      >
-                        {teacher.status}
-                      </Badge>
+
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="h-4 w-4" />
+                        <span className="truncate">{teacher.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-4 w-4" />
+                        <span>{teacher.phone}</span>
+                      </div>
                     </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
-                      <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">Excluir</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
 
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="h-4 w-4" />
-                    <span className="truncate">{teacher.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    <span>{teacher.phone}</span>
-                  </div>
-                </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {teacher.subjects.map((subject) => (
+                        <Badge key={subject} variant="secondary" className="text-xs">
+                          {subject}
+                        </Badge>
+                      ))}
+                    </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {teacher.subjects.map((subject) => (
-                    <Badge key={subject} variant="secondary" className="text-xs">
-                      {subject}
-                    </Badge>
-                  ))}
-                </div>
-
-                {/* Lessons Progress */}
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      <BookOpen className="h-4 w-4" />
-                      Aulas este mês
-                    </span>
-                    <span className="font-medium">
-                      {teacher.lessonsThisMonth}/{teacher.maxLessons}
-                    </span>
-                  </div>
-                  <Progress
-                    value={(teacher.lessonsThisMonth / teacher.maxLessons) * 100}
-                    className="h-2"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    {/* Lessons Count */}
+                    <div className="mt-4 flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <BookOpen className="h-4 w-4" />
+                        Aulas este mês
+                      </span>
+                      <span className="font-medium">{lessonsCount}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <TeacherModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+
+      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir professor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O professor será permanentemente excluído.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }

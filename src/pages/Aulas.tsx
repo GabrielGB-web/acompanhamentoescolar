@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, Calendar as CalendarIcon, Clock, User, GraduationCap } from "lucide-react";
+import { Plus, Search, Calendar as CalendarIcon, Clock, User, GraduationCap, MoreVertical, CheckCircle, XCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,80 +7,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LessonModal } from "@/components/modals/LessonModal";
-
-interface Lesson {
-  id: string;
-  student: string;
-  teacher: string;
-  subject: string;
-  date: string;
-  time: string;
-  duration: string;
-  status: "agendada" | "concluída" | "cancelada";
-}
-
-const mockLessons: Lesson[] = [
-  {
-    id: "1",
-    student: "Maria Silva",
-    teacher: "Prof. João",
-    subject: "Matemática",
-    date: "06/01/2026",
-    time: "14:00",
-    duration: "1h",
-    status: "agendada",
-  },
-  {
-    id: "2",
-    student: "Pedro Santos",
-    teacher: "Prof. Ana",
-    subject: "Português",
-    date: "06/01/2026",
-    time: "15:30",
-    duration: "1h30",
-    status: "agendada",
-  },
-  {
-    id: "3",
-    student: "Lucas Oliveira",
-    teacher: "Prof. João",
-    subject: "Física",
-    date: "06/01/2026",
-    time: "17:00",
-    duration: "1h",
-    status: "agendada",
-  },
-  {
-    id: "4",
-    student: "Ana Costa",
-    teacher: "Prof. Carlos",
-    subject: "Química",
-    date: "05/01/2026",
-    time: "10:00",
-    duration: "1h",
-    status: "concluída",
-  },
-  {
-    id: "5",
-    student: "Bruno Ferreira",
-    teacher: "Prof. Ana",
-    subject: "Português",
-    date: "05/01/2026",
-    time: "14:00",
-    duration: "1h",
-    status: "concluída",
-  },
-  {
-    id: "6",
-    student: "Carla Mendes",
-    teacher: "Prof. João",
-    subject: "Matemática",
-    date: "04/01/2026",
-    time: "16:00",
-    duration: "1h30",
-    status: "cancelada",
-  },
-];
+import { useLessons, useUpdateLessonStatus, useDeleteLesson } from "@/hooks/useLessons";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const statusStyles = {
   agendada: "bg-primary/10 text-primary",
@@ -92,16 +38,34 @@ export default function Aulas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("todas");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filteredLessons = mockLessons.filter((lesson) => {
+  const { data: lessons = [], isLoading } = useLessons();
+  const updateStatus = useUpdateLessonStatus();
+  const deleteLesson = useDeleteLesson();
+
+  const filteredLessons = lessons.filter((lesson) => {
+    const studentName = lesson.students?.name || "";
+    const teacherName = lesson.teachers?.name || "";
     const matchesSearch =
-      lesson.student.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lesson.teacher.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lesson.subject.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (activeTab === "todas") return matchesSearch;
     return matchesSearch && lesson.status === activeTab;
   });
+
+  const handleStatusChange = (id: string, status: "agendada" | "concluída" | "cancelada") => {
+    updateStatus.mutate({ id, status });
+  };
+
+  const confirmDelete = () => {
+    if (deletingId) {
+      deleteLesson.mutate(deletingId);
+      setDeletingId(null);
+    }
+  };
 
   return (
     <MainLayout>
@@ -151,9 +115,15 @@ export default function Aulas() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {filteredLessons.length === 0 ? (
+              {isLoading ? (
                 <div className="p-8 text-center text-muted-foreground">
-                  Nenhuma aula encontrada
+                  Carregando...
+                </div>
+              ) : filteredLessons.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  {searchTerm || activeTab !== "todas" 
+                    ? "Nenhuma aula encontrada" 
+                    : "Nenhuma aula agendada. Clique em 'Agendar Aula' para começar."}
                 </div>
               ) : (
                 filteredLessons.map((lesson) => (
@@ -170,25 +140,71 @@ export default function Aulas() {
                         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <User className="h-3 w-3" />
-                            {lesson.student}
+                            {lesson.students?.name || "Aluno não encontrado"}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <GraduationCap className="h-3 w-3" />
-                            {lesson.teacher}
+                            {lesson.teachers?.name || "Professor não encontrado"}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-medium">{lesson.date}</p>
+                        <p className="font-medium">
+                          {format(parseISO(lesson.date), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
                         <p className="flex items-center justify-end gap-1 text-sm text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {lesson.time} ({lesson.duration})
+                          {lesson.time.slice(0, 5)} ({lesson.duration})
                         </p>
                       </div>
                       <Badge className={statusStyles[lesson.status]}>{lesson.status}</Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {lesson.status === "agendada" && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handleStatusChange(lesson.id, "concluída")}
+                                className="text-success"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Marcar como Concluída
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleStatusChange(lesson.id, "cancelada")}
+                                className="text-destructive"
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Cancelar Aula
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          {lesson.status !== "agendada" && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handleStatusChange(lesson.id, "agendada")}
+                              >
+                                Reabrir como Agendada
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => setDeletingId(lesson.id)}
+                          >
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 ))
@@ -199,6 +215,23 @@ export default function Aulas() {
       </div>
 
       <LessonModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+
+      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir aula?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A aula será permanentemente excluída.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }

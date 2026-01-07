@@ -4,8 +4,28 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { RecentLessons } from "@/components/dashboard/RecentLessons";
 import { WeeklySchedule } from "@/components/dashboard/WeeklySchedule";
 import { WeeklyAgenda } from "@/components/dashboard/WeeklyAgenda";
+import { EventsReminders } from "@/components/dashboard/EventsReminders";
+import { useStudents } from "@/hooks/useStudents";
+import { useTeachers } from "@/hooks/useTeachers";
+import { useLessons } from "@/hooks/useLessons";
 
 export default function Dashboard() {
+  const { data: students = [] } = useStudents();
+  const { data: teachers = [] } = useTeachers();
+  const { data: lessons = [] } = useLessons();
+
+  // Count lessons scheduled for this week
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+  const weeklyLessons = lessons.filter((lesson) => {
+    const lessonDate = new Date(lesson.date);
+    return lessonDate >= startOfWeek && lessonDate <= endOfWeek;
+  });
+
   return (
     <MainLayout>
       <div className="animate-fade-in space-y-6">
@@ -23,23 +43,20 @@ export default function Dashboard() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             title="Total de Alunos"
-            value={42}
+            value={students.length}
             icon={Users}
-            trend={{ value: 12, isPositive: true }}
             variant="primary"
           />
           <StatCard
             title="Professores"
-            value={8}
+            value={teachers.length}
             icon={GraduationCap}
-            trend={{ value: 2, isPositive: true }}
             variant="secondary"
           />
           <StatCard
             title="Aulas esta Semana"
-            value={54}
+            value={weeklyLessons.length}
             icon={Calendar}
-            trend={{ value: 8, isPositive: true }}
           />
         </div>
 
@@ -49,6 +66,7 @@ export default function Dashboard() {
             <RecentLessons />
           </div>
           <div className="space-y-6">
+            <EventsReminders />
             <WeeklyAgenda />
           </div>
         </div>

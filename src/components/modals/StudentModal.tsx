@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
+import { useCreateStudent } from "@/hooks/useStudents";
 
 interface StudentModalProps {
   open: boolean;
@@ -21,12 +21,24 @@ export function StudentModal({ open, onOpenChange }: StudentModalProps) {
     responsiblePhone: "",
   });
 
+  const createStudent = useCreateStudent();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implementar salvamento no banco de dados
-    toast.success("Aluno cadastrado com sucesso!");
-    onOpenChange(false);
-    setFormData({ name: "", email: "", phone: "", grade: "", responsibleName: "", responsiblePhone: "" });
+    
+    createStudent.mutate({
+      name: formData.name,
+      email: formData.email || undefined,
+      phone: formData.phone || undefined,
+      grade: formData.grade || undefined,
+      responsible_name: formData.responsibleName || undefined,
+      responsible_phone: formData.responsiblePhone || undefined,
+    }, {
+      onSuccess: () => {
+        onOpenChange(false);
+        setFormData({ name: "", email: "", phone: "", grade: "", responsibleName: "", responsiblePhone: "" });
+      },
+    });
   };
 
   return (
@@ -57,13 +69,13 @@ export function StudentModal({ open, onOpenChange }: StudentModalProps) {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="6ano">6º Ano</SelectItem>
-                  <SelectItem value="7ano">7º Ano</SelectItem>
-                  <SelectItem value="8ano">8º Ano</SelectItem>
-                  <SelectItem value="9ano">9º Ano</SelectItem>
-                  <SelectItem value="1em">1º Ano EM</SelectItem>
-                  <SelectItem value="2em">2º Ano EM</SelectItem>
-                  <SelectItem value="3em">3º Ano EM</SelectItem>
+                  <SelectItem value="6º Ano">6º Ano</SelectItem>
+                  <SelectItem value="7º Ano">7º Ano</SelectItem>
+                  <SelectItem value="8º Ano">8º Ano</SelectItem>
+                  <SelectItem value="9º Ano">9º Ano</SelectItem>
+                  <SelectItem value="1º Ano EM">1º Ano EM</SelectItem>
+                  <SelectItem value="2º Ano EM">2º Ano EM</SelectItem>
+                  <SelectItem value="3º Ano EM">3º Ano EM</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -116,7 +128,9 @@ export function StudentModal({ open, onOpenChange }: StudentModalProps) {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">Cadastrar Aluno</Button>
+            <Button type="submit" disabled={createStudent.isPending}>
+              {createStudent.isPending ? "Salvando..." : "Cadastrar Aluno"}
+            </Button>
           </div>
         </form>
       </DialogContent>
