@@ -15,25 +15,25 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Users, label: "Alunos", path: "/alunos" },
-  { icon: GraduationCap, label: "Professores", path: "/professores" },
-  { icon: Calendar, label: "Aulas", path: "/aulas" },
-  { icon: Wallet, label: "Financeiro", path: "/financeiro" },
-  { icon: Receipt, label: "Recibos", path: "/recibos" },
-  { icon: Settings, label: "Configurações", path: "/configuracoes" },
+const allMenuItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", adminOnly: false },
+  { icon: Users, label: "Alunos", path: "/alunos", adminOnly: false },
+  { icon: GraduationCap, label: "Professores", path: "/professores", adminOnly: false },
+  { icon: Calendar, label: "Aulas", path: "/aulas", adminOnly: false },
+  { icon: Wallet, label: "Financeiro", path: "/financeiro", adminOnly: true },
+  { icon: Receipt, label: "Recibos", path: "/recibos", adminOnly: false },
+  { icon: Settings, label: "Configurações", path: "/configuracoes", adminOnly: false },
 ];
 
-interface SidebarProps {
-  onLogout?: () => void;
-}
-
-export function Sidebar({ onLogout }: SidebarProps) {
+export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
+  const { isAdmin, signOut } = useAuth();
+
+  const menuItems = allMenuItems.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <>
@@ -107,7 +107,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
           {/* Footer */}
           <div className="border-t border-sidebar-border p-4">
             <button
-              onClick={onLogout}
+              onClick={signOut}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-destructive/20 hover:text-destructive"
             >
               <LogOut className="h-5 w-5 flex-shrink-0" />
