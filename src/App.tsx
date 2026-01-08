@@ -83,6 +83,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {/* Public route for parents */}
+            <Route path="/agenda/:codigo" element={<AgendaPublica />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

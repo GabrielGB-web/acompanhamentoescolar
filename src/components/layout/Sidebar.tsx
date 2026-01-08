@@ -11,11 +11,11 @@ import {
   LogOut,
   Menu,
   X,
-  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import escolaLogo from "@/assets/escola-logo.png";
 
 const allMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", adminOnly: false },
@@ -67,17 +67,11 @@ export function Sidebar() {
           {/* Logo */}
           <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-primary">
-                <BookOpen className="h-6 w-6 text-sidebar-primary-foreground" />
-              </div>
-              {!isCollapsed && (
-                <div className="animate-fade-in">
-                  <h1 className="font-display text-lg font-bold text-sidebar-foreground">
-                    Acompanhamento
-                  </h1>
-                  <p className="text-xs text-sidebar-foreground/70">Escolar</p>
-                </div>
-              )}
+              <img 
+                src={escolaLogo} 
+                alt="Logo Escolar" 
+                className={cn("object-contain transition-all", isCollapsed ? "h-10 w-10" : "h-14")} 
+              />
             </div>
           </div>
 
