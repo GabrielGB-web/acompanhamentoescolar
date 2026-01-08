@@ -3,8 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Bell, Edit, Trash2, Calendar, Clock } from "lucide-react";
-import { useEvents, useDeleteEvent, Event } from "@/hooks/useEvents";
+import { Plus, Bell, Edit, Trash2, Calendar, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { useEvents, useDeleteEvent, useUpdateEvent, Event } from "@/hooks/useEvents";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EventModal } from "@/components/modals/EventModal";
 import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -30,6 +36,7 @@ const colorStyles: Record<string, string> = {
 export function EventsReminders() {
   const { data: events = [], isLoading } = useEvents();
   const deleteEvent = useDeleteEvent();
+  const updateEvent = useUpdateEvent();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
@@ -52,6 +59,21 @@ export function EventsReminders() {
     if (deletingEventId) {
       deleteEvent.mutate(deletingEventId);
       setDeletingEventId(null);
+    }
+  };
+
+  const handleStatusChange = (event: Event, status: string) => {
+    updateEvent.mutate({ id: event.id, title: event.title, date: event.date, status });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "realizado":
+        return <Badge className="bg-success/10 text-success">Realizado</Badge>;
+      case "cancelado":
+        return <Badge className="bg-destructive/10 text-destructive">Cancelado</Badge>;
+      default:
+        return null;
     }
   };
 
@@ -111,15 +133,24 @@ export function EventsReminders() {
                   <div
                     key={event.id}
                     className={`flex items-start gap-3 p-4 transition-colors hover:bg-muted/50 ${
-                      colorStyles[event.color || "primary"]
+                      event.status === "realizado" 
+                        ? "bg-success/5 border-success/30" 
+                        : event.status === "cancelado"
+                        ? "bg-destructive/5 border-destructive/30 opacity-60"
+                        : colorStyles[event.color || "primary"]
                     } border-l-4`}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium truncate">{event.title}</h4>
-                        <Badge className={getDateBadgeStyle(event.date)}>
-                          {getDateLabel(event.date)}
-                        </Badge>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className={`font-medium truncate ${event.status === "cancelado" ? "line-through" : ""}`}>
+                          {event.title}
+                        </h4>
+                        {getStatusBadge(event.status)}
+                        {event.status === "pendente" && (
+                          <Badge className={getDateBadgeStyle(event.date)}>
+                            {getDateLabel(event.date)}
+                          </Badge>
+                        )}
                       </div>
                       {event.description && (
                         <p className="text-sm text-muted-foreground truncate">
@@ -140,6 +171,25 @@ export function EventsReminders() {
                       </div>
                     </div>
                     <div className="flex gap-1">
+                      {event.status === "pendente" && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <CheckCircle2 className="h-4 w-4 text-success" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleStatusChange(event, "realizado")}>
+                              <CheckCircle2 className="h-4 w-4 mr-2 text-success" />
+                              Marcar como Realizado
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(event, "cancelado")}>
+                              <XCircle className="h-4 w-4 mr-2 text-destructive" />
+                              Marcar como Cancelado
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"

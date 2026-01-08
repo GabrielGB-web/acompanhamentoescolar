@@ -26,7 +26,7 @@ interface Student {
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   agendada: { label: "Agendada", variant: "default" },
-  concluida: { label: "Concluída", variant: "secondary" },
+  "concluída": { label: "Concluída", variant: "secondary" },
   cancelada: { label: "Cancelada", variant: "destructive" },
 };
 

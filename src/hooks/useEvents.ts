@@ -9,6 +9,7 @@ export interface Event {
   date: string;
   time: string | null;
   color: string | null;
+  status: string;
   created_at: string;
   updated_at: string;
 }
@@ -19,6 +20,7 @@ export interface EventFormData {
   date: string;
   time?: string;
   color?: string;
+  status?: string;
 }
 
 export function useEvents() {
