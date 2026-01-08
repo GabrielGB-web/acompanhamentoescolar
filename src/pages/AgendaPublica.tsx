@@ -3,9 +3,10 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, User, BookOpen, GraduationCap } from "lucide-react";
+import { Calendar, Clock, User, BookOpen } from "lucide-react";
 import { format, parseISO, startOfWeek, endOfWeek, addWeeks, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import escolaLogo from "@/assets/escola-logo.png";
 
 interface Lesson {
   id: string;
@@ -126,16 +127,20 @@ export default function AgendaPublica() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-2">
-              <GraduationCap className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">{student?.name}</h1>
-              {student?.grade && (
-                <p className="text-muted-foreground">{student.grade}</p>
-              )}
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img 
+                src={escolaLogo} 
+                alt="Logo Escolar" 
+                className="h-16 object-contain" 
+              />
+              <div className="border-l pl-4">
+                <h1 className="text-xl font-bold">{student?.name}</h1>
+                {student?.grade && (
+                  <p className="text-muted-foreground text-sm">{student.grade}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>

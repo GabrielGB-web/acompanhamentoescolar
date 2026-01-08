@@ -65,14 +65,12 @@ export function Sidebar() {
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-4">
-            <div className="flex items-center gap-3">
-              <img 
-                src={escolaLogo} 
-                alt="Logo Escolar" 
-                className={cn("object-contain transition-all", isCollapsed ? "h-10 w-10" : "h-14")} 
-              />
-            </div>
+          <div className="flex h-24 items-center justify-center border-b border-sidebar-border px-2">
+            <img 
+              src={escolaLogo} 
+              alt="Logo Escolar" 
+              className={cn("object-contain transition-all max-w-full", isCollapsed ? "h-12 w-12" : "h-20")} 
+            />
           </div>
 
           {/* Navigation */}
