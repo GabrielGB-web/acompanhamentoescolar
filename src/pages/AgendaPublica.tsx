@@ -7,21 +7,29 @@ import { Calendar, Clock, User, BookOpen } from "lucide-react";
 import { format, parseISO, startOfWeek, endOfWeek, addWeeks, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import escolaLogo from "@/assets/escola-logo.png";
+import { z } from "zod";
+
+// Access code validation schema - 8 uppercase hex characters
+const accessCodeSchema = z
+  .string()
+  .length(8, "Código deve ter 8 caracteres")
+  .regex(/^[A-Fa-f0-9]+$/, "Código inválido")
+  .transform(val => val.toUpperCase());
 
 interface Lesson {
-  id: string;
-  date: string;
-  time: string;
-  subject: string;
-  duration: string;
-  status: string;
-  teachers: { name: string } | null;
+  lesson_id: string;
+  lesson_date: string;
+  lesson_time: string;
+  lesson_subject: string;
+  lesson_duration: string;
+  lesson_status: string;
+  teacher_name: string;
 }
 
 interface Student {
-  id: string;
-  name: string;
-  grade: string | null;
+  student_id: string;
+  student_name: string;
+  student_grade: string | null;
 }
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -46,37 +54,41 @@ export default function AgendaPublica() {
         return;
       }
 
-      // Fetch student by access code
-      const { data: studentData, error: studentError } = await supabase
-        .from("students")
-        .select("id, name, grade, access_code")
-        .eq("access_code", codigo.toUpperCase())
-        .single();
+      // Validate access code format before making any database calls
+      const validationResult = accessCodeSchema.safeParse(codigo);
+      if (!validationResult.success) {
+        setError("Código de acesso inválido. Use o código de 8 caracteres fornecido.");
+        setLoading(false);
+        return;
+      }
 
-      if (studentError || !studentData) {
+      const validCode = validationResult.data;
+
+      // Use secure RPC function to get student data
+      const { data: studentData, error: studentError } = await supabase
+        .rpc('get_student_by_access_code', { code: validCode });
+
+      if (studentError) {
+        console.error("Error fetching student:", studentError);
+        setError("Erro ao buscar informações do aluno.");
+        setLoading(false);
+        return;
+      }
+
+      if (!studentData || studentData.length === 0) {
         setError("Código de acesso inválido. Verifique o código e tente novamente.");
         setLoading(false);
         return;
       }
 
-      setStudent(studentData);
+      setStudent(studentData[0]);
 
-      // Fetch lessons for this student
+      // Use secure RPC function to get lessons
       const { data: lessonsData, error: lessonsError } = await supabase
-        .from("lessons")
-        .select(`
-          id,
-          date,
-          time,
-          subject,
-          duration,
-          status,
-          teachers:teacher_id (name)
-        `)
-        .eq("student_id", studentData.id)
-        .order("date", { ascending: true });
+        .rpc('get_lessons_by_access_code', { code: validCode });
 
       if (lessonsError) {
+        console.error("Error fetching lessons:", lessonsError);
         setError("Erro ao carregar as aulas.");
         setLoading(false);
         return;
@@ -93,7 +105,7 @@ export default function AgendaPublica() {
   const currentWeekEnd = endOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
 
   const weekLessons = lessons.filter((lesson) => {
-    const lessonDate = parseISO(lesson.date);
+    const lessonDate = parseISO(lesson.lesson_date);
     return isWithinInterval(lessonDate, { start: currentWeekStart, end: currentWeekEnd });
   });
 
@@ -136,9 +148,9 @@ export default function AgendaPublica() {
                 className="h-16 object-contain" 
               />
               <div className="border-l pl-4">
-                <h1 className="text-xl font-bold">{student?.name}</h1>
-                {student?.grade && (
-                  <p className="text-muted-foreground text-sm">{student.grade}</p>
+                <h1 className="text-xl font-bold">{student?.student_name}</h1>
+                {student?.student_grade && (
+                  <p className="text-muted-foreground text-sm">{student.student_grade}</p>
                 )}
               </div>
             </div>
@@ -184,7 +196,7 @@ export default function AgendaPublica() {
               <div className="space-y-4">
                 {weekLessons.map((lesson) => (
                   <div
-                    key={lesson.id}
+                    key={lesson.lesson_id}
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
@@ -192,27 +204,27 @@ export default function AgendaPublica() {
                         <BookOpen className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">{lesson.subject}</h3>
+                        <h3 className="font-semibold">{lesson.lesson_subject}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {format(parseISO(lesson.date), "EEEE, dd/MM", { locale: ptBR })}
+                            {format(parseISO(lesson.lesson_date), "EEEE, dd/MM", { locale: ptBR })}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {lesson.time.slice(0, 5)} ({lesson.duration})
+                            {lesson.lesson_time.slice(0, 5)} ({lesson.lesson_duration})
                           </span>
                         </div>
-                        {lesson.teachers && (
+                        {lesson.teacher_name && (
                           <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                             <User className="h-3 w-3" />
-                            Prof. {lesson.teachers.name}
+                            Prof. {lesson.teacher_name}
                           </p>
                         )}
                       </div>
                     </div>
-                    <Badge variant={statusConfig[lesson.status]?.variant || "default"}>
-                      {statusConfig[lesson.status]?.label || lesson.status}
+                    <Badge variant={statusConfig[lesson.lesson_status]?.variant || "default"}>
+                      {statusConfig[lesson.lesson_status]?.label || lesson.lesson_status}
                     </Badge>
                   </div>
                 ))}
@@ -230,27 +242,27 @@ export default function AgendaPublica() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {lessons.filter(l => parseISO(l.date) >= new Date() && l.status === "agendada").length === 0 ? (
+            {lessons.filter(l => parseISO(l.lesson_date) >= new Date() && l.lesson_status === "agendada").length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">
                 Nenhuma aula futura agendada.
               </p>
             ) : (
               <div className="space-y-3">
                 {lessons
-                  .filter(l => parseISO(l.date) >= new Date() && l.status === "agendada")
+                  .filter(l => parseISO(l.lesson_date) >= new Date() && l.lesson_status === "agendada")
                   .slice(0, 10)
                   .map((lesson) => (
                     <div
-                      key={lesson.id}
+                      key={lesson.lesson_id}
                       className="flex items-center justify-between p-3 rounded border"
                     >
                       <div>
-                        <p className="font-medium">{lesson.subject}</p>
+                        <p className="font-medium">{lesson.lesson_subject}</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(parseISO(lesson.date), "dd/MM/yyyy", { locale: ptBR })} às {lesson.time.slice(0, 5)}
+                          {format(parseISO(lesson.lesson_date), "dd/MM/yyyy", { locale: ptBR })} às {lesson.lesson_time.slice(0, 5)}
                         </p>
                       </div>
-                      <Badge variant="outline">{lesson.duration}</Badge>
+                      <Badge variant="outline">{lesson.lesson_duration}</Badge>
                     </div>
                   ))}
               </div>
