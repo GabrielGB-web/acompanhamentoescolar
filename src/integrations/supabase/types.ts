@@ -148,7 +148,7 @@ export type Database = {
           date?: string
           description: string
           id?: string
-          receipt_number: string
+          receipt_number?: string
           student_id?: string | null
           student_name: string
         }
@@ -298,6 +298,27 @@ export type Database = {
     }
     Functions: {
       generate_access_code: { Args: never; Returns: string }
+      generate_receipt_number: { Args: never; Returns: string }
+      get_lessons_by_access_code: {
+        Args: { code: string }
+        Returns: {
+          lesson_date: string
+          lesson_duration: string
+          lesson_id: string
+          lesson_status: Database["public"]["Enums"]["lesson_status"]
+          lesson_subject: string
+          lesson_time: string
+          teacher_name: string
+        }[]
+      }
+      get_student_by_access_code: {
+        Args: { code: string }
+        Returns: {
+          student_grade: string
+          student_id: string
+          student_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
