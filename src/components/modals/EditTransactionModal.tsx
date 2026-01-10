@@ -1,97 +1,78 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useStudents } from "@/hooks/useStudents";
-import { useCreateReceipt } from "@/hooks/useReceipts";
+import { useUpdateTransaction, Transaction } from "@/hooks/useTransactions";
 
-interface ReceiptModalProps {
+interface EditTransactionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  transaction: Transaction | null;
 }
 
-const paymentMethods = ["PIX", "Dinheiro", "Cartão de Crédito", "Cartão de Débito", "Boleto", "Transferência"];
+const incomeCategories = ["Mensalidade", "Aula Avulsa", "Material", "Outros"];
+const expenseCategories = ["Salário", "Material Didático", "Aluguel", "Energia", "Água", "Internet", "Outros"];
 
-export function ReceiptModal({ open, onOpenChange }: ReceiptModalProps) {
+export function EditTransactionModal({ open, onOpenChange, transaction }: EditTransactionModalProps) {
   const [formData, setFormData] = useState({
-    student_id: "",
-    student_name: "",
     description: "",
     amount: "",
-    paymentMethod: "",
-    date: new Date().toISOString().split("T")[0],
+    category: "",
+    date: "",
   });
 
-  const { data: students = [] } = useStudents();
-  const createReceipt = useCreateReceipt();
+  const updateTransaction = useUpdateTransaction();
+  const categories = transaction?.type === "entrada" ? incomeCategories : expenseCategories;
 
-  const handleStudentChange = (studentId: string) => {
-    const student = students.find(s => s.id === studentId);
-    setFormData({ 
-      ...formData, 
-      student_id: studentId,
-      student_name: student?.name || "",
-    });
-  };
+  useEffect(() => {
+    if (transaction) {
+      setFormData({
+        description: transaction.description,
+        amount: transaction.amount.toString(),
+        category: transaction.category,
+        date: transaction.date,
+      });
+    }
+  }, [transaction]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    createReceipt.mutate({
-      student_id: formData.student_id || undefined,
-      student_name: formData.student_name,
+    if (!transaction) return;
+
+    updateTransaction.mutate({
+      id: transaction.id,
+      type: transaction.type,
       description: formData.description,
       amount: parseFloat(formData.amount),
+      category: formData.category,
       date: formData.date,
     }, {
       onSuccess: () => {
         onOpenChange(false);
-        setFormData({ student_id: "", student_name: "", description: "", amount: "", paymentMethod: "", date: new Date().toISOString().split("T")[0] });
       },
     });
   };
+
+  if (!transaction) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">Novo Recibo</DialogTitle>
+          <DialogTitle className="font-display text-xl">
+            Editar {transaction.type === "entrada" ? "Entrada" : "Saída"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Aluno</Label>
-            <Select
-              value={formData.student_id}
-              onValueChange={handleStudentChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o aluno" />
-              </SelectTrigger>
-<SelectContent className="max-h-60">
-                {students.length === 0 ? (
-                  <div className="p-2 text-center text-sm text-muted-foreground">
-                    Nenhum aluno cadastrado
-                  </div>
-                ) : (
-                  students.map((student) => (
-                    <SelectItem key={student.id} value={student.id}>
-                      {student.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
             <Input
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Ex: Mensalidade Janeiro/2026"
               required
             />
           </div>
@@ -106,23 +87,22 @@ export function ReceiptModal({ open, onOpenChange }: ReceiptModalProps) {
                 min="0"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder="0,00"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label>Forma de Pagamento</Label>
+              <Label>Categoria</Label>
               <Select
-                value={formData.paymentMethod}
-                onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {paymentMethods.map((method) => (
-                    <SelectItem key={method} value={method}>
-                      {method}
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -145,8 +125,12 @@ export function ReceiptModal({ open, onOpenChange }: ReceiptModalProps) {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={createReceipt.isPending}>
-              {createReceipt.isPending ? "Gerando..." : "Gerar Recibo"}
+            <Button 
+              type="submit" 
+              className={transaction.type === "entrada" ? "bg-success hover:bg-success/90" : ""}
+              disabled={updateTransaction.isPending}
+            >
+              {updateTransaction.isPending ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>
         </form>

@@ -4,6 +4,9 @@ import {
   ArrowDownLeft,
   TrendingUp,
   Search,
+  MoreVertical,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -13,9 +16,26 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TransactionModal } from "@/components/modals/TransactionModal";
-import { useTransactions } from "@/hooks/useTransactions";
+import { EditTransactionModal } from "@/components/modals/EditTransactionModal";
+import { useTransactions, useDeleteTransaction, Transaction } from "@/hooks/useTransactions";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -29,8 +49,12 @@ export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("todas");
   const [incomeModalOpen, setIncomeModalOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: transactions = [], isLoading } = useTransactions();
+  const deleteTransaction = useDeleteTransaction();
 
   const totalEntradas = transactions
     .filter((t) => t.type === "entrada")
@@ -52,6 +76,18 @@ export default function Financeiro() {
     if (activeTab === "saidas") return matchesSearch && transaction.type === "saida";
     return matchesSearch;
   });
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setEditModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deletingId) {
+      deleteTransaction.mutate(deletingId);
+      setDeletingId(null);
+    }
+  };
 
   return (
     <MainLayout>
@@ -181,6 +217,26 @@ export default function Financeiro() {
                       <Badge className="bg-success/10 text-success">
                         confirmado
                       </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(transaction)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => setDeletingId(transaction.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 ))
@@ -192,6 +248,28 @@ export default function Financeiro() {
 
       <TransactionModal open={incomeModalOpen} onOpenChange={setIncomeModalOpen} type="entrada" />
       <TransactionModal open={expenseModalOpen} onOpenChange={setExpenseModalOpen} type="saida" />
+      <EditTransactionModal 
+        open={editModalOpen} 
+        onOpenChange={setEditModalOpen} 
+        transaction={editingTransaction} 
+      />
+
+      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A transação será permanentemente excluída.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }

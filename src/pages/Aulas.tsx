@@ -160,7 +160,9 @@ export default function Aulas() {
                           {lesson.time.slice(0, 5)} ({lesson.duration})
                         </p>
                       </div>
-                      <Badge className={statusStyles[lesson.status]}>{lesson.status}</Badge>
+                      <Badge className={statusStyles[lesson.status]}>
+                        {lesson.status === "concluída" ? "Concluída" : lesson.status === "cancelada" ? "Cancelada" : "Agendada"}
+                      </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
