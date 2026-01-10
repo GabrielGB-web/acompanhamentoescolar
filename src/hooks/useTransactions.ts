@@ -58,3 +58,50 @@ export function useCreateTransaction() {
     },
   });
 }
+
+export function useUpdateTransaction() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...formData }: TransactionFormData & { id: string }) => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .update(formData)
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Transação atualizada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar transação: " + error.message);
+    },
+  });
+}
+
+export function useDeleteTransaction() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Transação excluída com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir transação: " + error.message);
+    },
+  });
+}
