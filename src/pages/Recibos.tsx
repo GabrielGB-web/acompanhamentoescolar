@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ReceiptModal } from "@/components/modals/ReceiptModal";
 import { ReceiptViewModal } from "@/components/modals/ReceiptViewModal";
 import { useReceipts, Receipt as ReceiptType } from "@/hooks/useReceipts";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatDateBR } from "@/lib/date";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -119,7 +118,7 @@ export default function Recibos() {
                           {formatCurrency(Number(receipt.amount))}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {format(parseISO(receipt.date), "dd/MM/yyyy", { locale: ptBR })}
+                          {formatDateBR(receipt.date)}
                         </p>
                       </div>
                       <div className="flex gap-1">
