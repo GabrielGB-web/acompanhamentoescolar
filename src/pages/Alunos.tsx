@@ -126,7 +126,7 @@ export default function Alunos() {
 
       <StudentModal open={isModalOpen} onOpenChange={setIsModalOpen} />
 
-      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>

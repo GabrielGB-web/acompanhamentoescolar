@@ -66,9 +66,9 @@ export function LessonModal({ open, onOpenChange }: LessonModalProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {students.length === 0 ? (
-                    <SelectItem value="none" disabled>
+                    <div className="py-2 px-2 text-sm text-muted-foreground">
                       Nenhum aluno cadastrado
-                    </SelectItem>
+                    </div>
                   ) : (
                     students.map((student) => (
                       <SelectItem key={student.id} value={student.id}>
@@ -90,9 +90,9 @@ export function LessonModal({ open, onOpenChange }: LessonModalProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {teachers.length === 0 ? (
-                    <SelectItem value="none" disabled>
+                    <div className="py-2 px-2 text-sm text-muted-foreground">
                       Nenhum professor cadastrado
-                    </SelectItem>
+                    </div>
                   ) : (
                     teachers.map((teacher) => (
                       <SelectItem key={teacher.id} value={teacher.id}>

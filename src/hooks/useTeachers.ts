@@ -58,6 +58,31 @@ export function useCreateTeacher() {
   });
 }
 
+export function useUpdateTeacher() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: TeacherFormData }) => {
+      const { data: result, error } = await supabase
+        .from("teachers")
+        .update(data)
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teachers"] });
+      toast.success("Professor atualizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar professor: " + error.message);
+    },
+  });
+}
+
 export function useDeleteTeacher() {
   const queryClient = useQueryClient();
   
