@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { TeacherModal } from "@/components/modals/TeacherModal";
-import { useTeachers, useDeleteTeacher } from "@/hooks/useTeachers";
+import { EditTeacherModal } from "@/components/modals/EditTeacherModal";
+import { useTeachers, useDeleteTeacher, Teacher } from "@/hooks/useTeachers";
 import { useLessons } from "@/hooks/useLessons";
 import {
   AlertDialog,
@@ -28,6 +29,7 @@ import {
 export default function Professores() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: teachers = [], isLoading } = useTeachers();
@@ -125,8 +127,7 @@ export default function Professores() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setEditingTeacher(teacher)}>Editar</DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-destructive"
                             onClick={() => setDeletingId(teacher.id)}
@@ -173,8 +174,13 @@ export default function Professores() {
       </div>
 
       <TeacherModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+      <EditTeacherModal 
+        open={!!editingTeacher} 
+        onOpenChange={(open) => !open && setEditingTeacher(null)} 
+        teacher={editingTeacher} 
+      />
 
-      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir professor?</AlertDialogTitle>
