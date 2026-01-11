@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LessonModal } from "@/components/modals/LessonModal";
 import { useLessons, useUpdateLessonStatus, useDeleteLesson } from "@/hooks/useLessons";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatDateBR } from "@/lib/date";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -153,11 +152,11 @@ export default function Aulas() {
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="font-medium">
-                          {format(parseISO(lesson.date), "dd/MM/yyyy", { locale: ptBR })}
+                          {formatDateBR(lesson.date)}
                         </p>
                         <p className="flex items-center justify-end gap-1 text-sm text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {lesson.time.slice(0, 5)} ({lesson.duration})
+                          {(lesson.time ?? "").slice(0, 5) || "--:--"} ({lesson.duration})
                         </p>
                       </div>
                       <Badge className={statusStyles[lesson.status]}>
@@ -218,7 +217,7 @@ export default function Aulas() {
 
       <LessonModal open={isModalOpen} onOpenChange={setIsModalOpen} />
 
-      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir aula?</AlertDialogTitle>

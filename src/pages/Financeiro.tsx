@@ -18,8 +18,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { TransactionModal } from "@/components/modals/TransactionModal";
 import { EditTransactionModal } from "@/components/modals/EditTransactionModal";
 import { useTransactions, useDeleteTransaction, Transaction } from "@/hooks/useTransactions";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatDateBR } from "@/lib/date";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -197,7 +196,7 @@ export default function Financeiro() {
                       <div>
                         <p className="font-medium">{transaction.description}</p>
                         <p className="text-sm text-muted-foreground">
-                          {transaction.category} • {format(parseISO(transaction.date), "dd/MM/yyyy", { locale: ptBR })}
+                          {transaction.category} • {formatDateBR(transaction.date)}
                         </p>
                       </div>
                     </div>
@@ -254,7 +253,7 @@ export default function Financeiro() {
         transaction={editingTransaction} 
       />
 
-      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
