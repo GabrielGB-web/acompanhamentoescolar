@@ -39,9 +39,9 @@ export default function Configuracoes() {
       try {
         setLoading(true);
 
-        // Fetch school settings
+        // Fetch school settings from school_info
         const { data: settingsData, error: settingsError } = await supabase
-          .from("site_settings")
+          .from("school_info")
           .select("*")
           .single();
 
@@ -84,7 +84,7 @@ export default function Configuracoes() {
       // Update school settings if admin
       if (isAdmin) {
         const { error: settingsError } = await supabase
-          .from("site_settings")
+          .from("school_info")
           .upsert({
             id: SETTINGS_ID,
             school_name: schoolSettings.school_name,
@@ -112,9 +112,9 @@ export default function Configuracoes() {
       }
 
       toast.success("Configurações salvas com sucesso!");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving settings:", error);
-      toast.error("Erro ao salvar configurações: " + error.message);
+      toast.error("Erro ao salvar configurações: " + (error instanceof Error ? error.message : "Erro desconhecido"));
     } finally {
       setSaving(false);
     }
