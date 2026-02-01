@@ -75,23 +75,25 @@ export default function Configuracoes() {
     fetchData();
   }, [user]);
 
+  const SETTINGS_ID = "00000000-0000-0000-0000-000000000000";
+
   const handleSave = async () => {
     try {
       setSaving(true);
 
       // Update school settings if admin
-      if (isAdmin && schoolSettings.id) {
+      if (isAdmin) {
         const { error: settingsError } = await supabase
           .from("site_settings")
-          .update({
+          .upsert({
+            id: SETTINGS_ID,
             school_name: schoolSettings.school_name,
             address: schoolSettings.address,
             city: schoolSettings.city,
             state: schoolSettings.state,
             phone: schoolSettings.phone,
             email: schoolSettings.email,
-          })
-          .eq("id", schoolSettings.id);
+          });
 
         if (settingsError) throw settingsError;
       }
