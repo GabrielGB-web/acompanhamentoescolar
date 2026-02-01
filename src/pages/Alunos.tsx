@@ -46,10 +46,20 @@ export default function Alunos() {
   };
 
   const copyAgendaLink = (student: typeof students[0]) => {
+    if (!student.access_code) {
+      toast.error("Aluno sem código de acesso gerado");
+      return;
+    }
     const link = `${window.location.origin}/agenda/${student.access_code}`;
+
+    // Copy to clipboard
     navigator.clipboard.writeText(link);
     setCopiedId(student.id);
     toast.success("Link da agenda copiado!");
+
+    // Open in new tab
+    window.open(link, '_blank');
+
     setTimeout(() => setCopiedId(null), 2000);
   };
 
