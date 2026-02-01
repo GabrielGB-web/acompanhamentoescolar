@@ -108,8 +108,13 @@ export default function Alunos() {
                         <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => copyAgendaLink(student)}>
-                          <Link className="h-4 w-4 mr-2" />Copiar link da agenda
+                        <DropdownMenuItem
+                          onClick={() => copyAgendaLink(student)}
+                          disabled={!student.access_code}
+                          className={!student.access_code ? "opacity-50 cursor-not-allowed" : ""}
+                        >
+                          <Link className="h-4 w-4 mr-2" />
+                          {student.access_code ? "Copiar link da agenda" : "Sem código de acesso"}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => setDeletingId(student.id)}>Excluir</DropdownMenuItem>
                       </DropdownMenuContent>

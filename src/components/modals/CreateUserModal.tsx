@@ -27,7 +27,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.role) {
       toast.error("Selecione uma função para o usuário.");
       return;
@@ -67,6 +67,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
       toast.success(`Usuário ${formData.name} criado com sucesso!`);
       onOpenChange(false);
       setFormData({ name: "", email: "", password: "", role: "" });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error creating user:", error);
       if (error.message?.includes("already registered")) {
