@@ -51,9 +51,15 @@ export default function Alunos() {
       return;
     }
     const link = `${window.location.origin}/agenda/${student.access_code}`;
+
+    // Copy to clipboard
     navigator.clipboard.writeText(link);
     setCopiedId(student.id);
     toast.success("Link da agenda copiado!");
+
+    // Open in new tab
+    window.open(link, '_blank');
+
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -102,7 +108,7 @@ export default function Alunos() {
                         <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => copyAgendaLink(student)}
                           disabled={!student.access_code}
                           className={!student.access_code ? "opacity-50 cursor-not-allowed" : ""}
