@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Save, User, Building, Bell, Shield, UserPlus, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Save, User, Building, Bell, Shield, UserPlus, Users, Loader2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,19 +9,144 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Configuracoes() {
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [schoolSettings, setSchoolSettings] = useState({
+    id: "",
+    school_name: "Acompanhamento Escolar",
+    address: "",
+    city: "Palmas",
+    state: "Tocantins",
+    phone: "",
+    email: "",
+  });
+
+  const [profile, setProfile] = useState({
+    id: "",
+    name: "",
+    email: "",
+  });
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+
+        // Fetch school settings
+        const { data: settingsData, error: settingsError } = await supabase
+          .from("site_settings")
+          .select("*")
+          .single();
+
+        if (!settingsError && settingsData) {
+          setSchoolSettings(settingsData);
+        }
+
+        // Fetch user profile
+        if (user) {
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("user_id", user.id)
+            .single();
+
+          if (!profileError && profileData) {
+            setProfile({
+              id: profileData.id,
+              name: profileData.name,
+              email: profileData.email || "",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [user]);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+
+      // Update school settings if admin
+      if (isAdmin && schoolSettings.id) {
+        const { error: settingsError } = await supabase
+          .from("site_settings")
+          .update({
+            school_name: schoolSettings.school_name,
+            address: schoolSettings.address,
+            city: schoolSettings.city,
+            state: schoolSettings.state,
+            phone: schoolSettings.phone,
+            email: schoolSettings.email,
+          })
+          .eq("id", schoolSettings.id);
+
+        if (settingsError) throw settingsError;
+      }
+
+      // Update user profile
+      if (profile.id) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            name: profile.name,
+            email: profile.email,
+          })
+          .eq("id", profile.id);
+
+        if (profileError) throw profileError;
+      }
+
+      toast.success("Configurações salvas com sucesso!");
+    } catch (error: any) {
+      console.error("Error saving settings:", error);
+      toast.error("Erro ao salvar configurações: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex h-[400px] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="animate-fade-in space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Configurações</h1>
-          <p className="mt-1 text-muted-foreground">
-            Gerencie as configurações do sistema
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground">Configurações</h1>
+            <p className="mt-1 text-muted-foreground">
+              Gerencie as configurações do sistema
+            </p>
+          </div>
+          <Button
+            className="gap-2 bg-primary hover:bg-primary/90"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Salvar Alterações
+          </Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -39,29 +164,63 @@ export default function Configuracoes() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="school-name">Nome da Escola</Label>
-                <Input id="school-name" defaultValue="Acompanhamento Escolar" />
+                <Input
+                  id="school-name"
+                  value={schoolSettings.school_name}
+                  onChange={(e) => setSchoolSettings({ ...schoolSettings, school_name: e.target.value })}
+                  disabled={!isAdmin}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">Endereço</Label>
-                <Input id="address" placeholder="Endereço completo" />
+                <Input
+                  id="address"
+                  placeholder="Endereço completo"
+                  value={schoolSettings.address || ""}
+                  onChange={(e) => setSchoolSettings({ ...schoolSettings, address: e.target.value })}
+                  disabled={!isAdmin}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="city">Cidade</Label>
-                  <Input id="city" defaultValue="Palmas" />
+                  <Input
+                    id="city"
+                    value={schoolSettings.city || ""}
+                    onChange={(e) => setSchoolSettings({ ...schoolSettings, city: e.target.value })}
+                    disabled={!isAdmin}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="state">Estado</Label>
-                  <Input id="state" defaultValue="Tocantins" />
+                  <Input
+                    id="state"
+                    value={schoolSettings.state || ""}
+                    onChange={(e) => setSchoolSettings({ ...schoolSettings, state: e.target.value })}
+                    disabled={!isAdmin}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" placeholder="(63) 99999-9999" />
+                <Input
+                  id="phone"
+                  placeholder="(63) 99999-9999"
+                  value={schoolSettings.phone || ""}
+                  onChange={(e) => setSchoolSettings({ ...schoolSettings, phone: e.target.value })}
+                  disabled={!isAdmin}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input id="email" type="email" placeholder="contato@escola.com" />
+                <Label htmlFor="email">E-mail da Escola</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="contato@escola.com"
+                  value={schoolSettings.email || ""}
+                  onChange={(e) => setSchoolSettings({ ...schoolSettings, email: e.target.value })}
+                  disabled={!isAdmin}
+                />
               </div>
             </CardContent>
           </Card>
@@ -80,29 +239,31 @@ export default function Configuracoes() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="user-name">Nome Completo</Label>
-                <Input id="user-name" placeholder="Seu nome" />
+                <Input
+                  id="user-name"
+                  placeholder="Seu nome"
+                  value={profile.name}
+                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="user-email">E-mail</Label>
-                <Input id="user-email" type="email" placeholder="seu@email.com" />
+                <Input
+                  id="user-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={profile.email}
+                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                />
               </div>
               <Separator />
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Senha Atual</Label>
-                <Input id="current-password" type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">Nova Senha</Label>
-                <Input id="new-password" type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                <Input id="confirm-password" type="password" />
-              </div>
+              <p className="text-sm text-muted-foreground italic">
+                Para alterar sua senha, utilize a opção de recuperação na tela de login.
+              </p>
             </CardContent>
           </Card>
 
-          {/* Notifications */}
+          {/* Notifications config UI (Visual Only as per original) */}
           <Card className="shadow-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -133,52 +294,6 @@ export default function Configuracoes() {
                 </div>
                 <Switch defaultChecked />
               </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Alerta de Pagamentos</p>
-                  <p className="text-sm text-muted-foreground">
-                    Aviso de pagamentos pendentes
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Security */}
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                Segurança
-              </CardTitle>
-              <CardDescription>
-                Configurações de segurança da conta
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Autenticação em Dois Fatores</p>
-                  <p className="text-sm text-muted-foreground">
-                    Adicione uma camada extra de segurança
-                  </p>
-                </div>
-                <Switch />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Sessões Ativas</p>
-                  <p className="text-sm text-muted-foreground">
-                    Gerencie seus dispositivos conectados
-                  </p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Ver Sessões
-                </Button>
-              </div>
             </CardContent>
           </Card>
 
@@ -202,9 +317,9 @@ export default function Configuracoes() {
                       Adicione administradores ou professores
                     </p>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="gap-2"
                     onClick={() => setIsCreateUserModalOpen(true)}
                   >
@@ -216,19 +331,11 @@ export default function Configuracoes() {
             </Card>
           )}
         </div>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <Button className="gap-2 bg-primary hover:bg-primary/90">
-            <Save className="h-4 w-4" />
-            Salvar Alterações
-          </Button>
-        </div>
       </div>
 
-      <CreateUserModal 
-        open={isCreateUserModalOpen} 
-        onOpenChange={setIsCreateUserModalOpen} 
+      <CreateUserModal
+        open={isCreateUserModalOpen}
+        onOpenChange={setIsCreateUserModalOpen}
       />
     </MainLayout>
   );
