@@ -31,6 +31,6 @@ FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Insert initial row if not exists
-INSERT INTO public.site_settings (school_name, city, state)
-SELECT 'Acompanhamento Escolar', 'Palmas', 'Tocantins'
-WHERE NOT EXISTS (SELECT 1 FROM public.site_settings);
+INSERT INTO public.site_settings (id, school_name, city, state)
+VALUES ('00000000-0000-0000-0000-000000000000', 'Acompanhamento Escolar', 'Palmas', 'Tocantins')
+ON CONFLICT (id) DO NOTHING;
