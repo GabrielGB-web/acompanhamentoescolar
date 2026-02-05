@@ -40,21 +40,24 @@ export default function Configuracoes() {
         setLoading(true);
 
         // Fetch school settings - try school_info first, then site_settings as fallback
-        let { data: settingsData, error: settingsError } = await supabase
+        const { data: infoData, error: infoError } = await supabase
           .from("school_info")
           .select("*")
-          .maybeSingle();
+          .limit(1);
 
-        // If school_info fails (e.g. table doesn't exist), try site_settings
+        let settingsData = infoData?.[0] || null;
+        let settingsError = infoError;
+
+        // If school_info fails or is empty, try site_settings
         if (settingsError || !settingsData) {
-          console.log("school_info not found or errored, trying site_settings fallback...");
+          console.log("school_info empty or errored, trying site_settings fallback...");
           const { data: fallbackData, error: fallbackError } = await supabase
             .from("site_settings")
             .select("*")
-            .maybeSingle();
+            .limit(1);
 
-          if (!fallbackError && fallbackData) {
-            settingsData = fallbackData;
+          if (!fallbackError && fallbackData && fallbackData.length > 0) {
+            settingsData = fallbackData[0];
             settingsError = null;
           }
         }
@@ -63,7 +66,16 @@ export default function Configuracoes() {
           console.error("Error fetching settings:", settingsError);
           toast.error("Erro ao carregar dados da escola: " + settingsError.message);
         } else if (settingsData) {
-          setSchoolSettings(settingsData);
+          console.log("School settings loaded:", settingsData);
+          setSchoolSettings({
+            id: settingsData.id,
+            school_name: settingsData.school_name || "Acompanhamento Escolar",
+            address: settingsData.address || "",
+            city: settingsData.city || "",
+            state: settingsData.state || "",
+            phone: settingsData.phone || "",
+            email: settingsData.email || "",
+          });
         }
 
         // Fetch user profile
