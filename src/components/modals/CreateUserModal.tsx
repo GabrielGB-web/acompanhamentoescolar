@@ -70,8 +70,12 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error creating user:", error);
-      if (error.message?.includes("already registered")) {
+      const errorMessage = error.message?.toLowerCase() || "";
+
+      if (errorMessage.includes("already registered")) {
         toast.error("Este email já está cadastrado.");
+      } else if (errorMessage.includes("weak") || errorMessage.includes("easy to guess")) {
+        toast.error("A senha escolhida é considerada fraca ou muito comum. Por favor, escolha uma senha mais forte (use letras, números e símbolos).");
       } else {
         toast.error("Erro ao criar usuário: " + error.message);
       }
