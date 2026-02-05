@@ -43,6 +43,7 @@ export default function Configuracoes() {
         const { data: infoData, error: infoError } = await supabase
           .from("school_info")
           .select("*")
+          .order('updated_at', { ascending: false })
           .limit(1);
 
         let settingsData = infoData?.[0] || null;
@@ -54,6 +55,7 @@ export default function Configuracoes() {
           const { data: fallbackData, error: fallbackError } = await supabase
             .from("site_settings")
             .select("*")
+            .order('updated_at', { ascending: false })
             .limit(1);
 
           if (!fallbackError && fallbackData && fallbackData.length > 0) {
