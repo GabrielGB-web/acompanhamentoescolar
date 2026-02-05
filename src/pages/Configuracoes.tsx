@@ -43,9 +43,12 @@ export default function Configuracoes() {
         const { data: settingsData, error: settingsError } = await supabase
           .from("school_info")
           .select("*")
-          .single();
+          .maybeSingle();
 
-        if (!settingsError && settingsData) {
+        if (settingsError) {
+          console.error("Error fetching school info:", settingsError);
+          toast.error("Erro ao carregar dados da escola");
+        } else if (settingsData) {
           setSchoolSettings(settingsData);
         }
 
@@ -86,7 +89,7 @@ export default function Configuracoes() {
         const { error: settingsError } = await supabase
           .from("school_info")
           .upsert({
-            id: SETTINGS_ID,
+            id: schoolSettings.id || SETTINGS_ID,
             school_name: schoolSettings.school_name,
             address: schoolSettings.address,
             city: schoolSettings.city,
