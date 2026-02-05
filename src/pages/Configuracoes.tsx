@@ -39,15 +39,29 @@ export default function Configuracoes() {
       try {
         setLoading(true);
 
-        // Fetch school settings from school_info
-        const { data: settingsData, error: settingsError } = await supabase
+        // Fetch school settings - try school_info first, then site_settings as fallback
+        let { data: settingsData, error: settingsError } = await supabase
           .from("school_info")
           .select("*")
           .maybeSingle();
 
+        // If school_info fails (e.g. table doesn't exist), try site_settings
+        if (settingsError || !settingsData) {
+          console.log("school_info not found or errored, trying site_settings fallback...");
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from("site_settings")
+            .select("*")
+            .maybeSingle();
+
+          if (!fallbackError && fallbackData) {
+            settingsData = fallbackData;
+            settingsError = null;
+          }
+        }
+
         if (settingsError) {
-          console.error("Error fetching school info:", settingsError);
-          toast.error("Erro ao carregar dados da escola");
+          console.error("Error fetching settings:", settingsError);
+          toast.error("Erro ao carregar dados da escola: " + settingsError.message);
         } else if (settingsData) {
           setSchoolSettings(settingsData);
         }
@@ -86,6 +100,7 @@ export default function Configuracoes() {
 
       // Update school settings if admin
       if (isAdmin) {
+        // We try to upsert to school_info primarily
         const { error: settingsError } = await supabase
           .from("school_info")
           .upsert({
@@ -98,7 +113,27 @@ export default function Configuracoes() {
             email: schoolSettings.email,
           });
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error("Error saving to school_info, trying site_settings:", settingsError);
+          // Fallback save to site_settings if school_info fails
+          const { error: fallbackError } = await supabase
+            .from("site_settings")
+            .upsert({
+              id: schoolSettings.id || SETTINGS_ID,
+              school_name: schoolSettings.school_name,
+              address: schoolSettings.address,
+              city: schoolSettings.city,
+              state: schoolSettings.state,
+              phone: schoolSettings.phone,
+              email: schoolSettings.email,
+            });
+
+          if (fallbackError) throw fallbackError;
+        }
+      } else {
+        toast.error("Você não tem permissão de administrador para salvar estas configurações.");
+        setSaving(false);
+        return;
       }
 
       // Update user profile
