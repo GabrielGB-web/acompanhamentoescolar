@@ -129,6 +129,10 @@ export default function Configuracoes() {
 
         if (settingsError) {
           console.error("Error saving to school_info, trying site_settings:", settingsError);
+
+          // Sanitizamos o telefone (apenas números) para o caso de a tabela site_settings usar tipo numérico
+          const numericPhone = schoolSettings.phone.replace(/\D/g, "");
+
           // Fallback save to site_settings if school_info fails
           const { error: fallbackError } = await supabase
             .from("site_settings")
@@ -138,7 +142,7 @@ export default function Configuracoes() {
               address: schoolSettings.address,
               city: schoolSettings.city,
               state: schoolSettings.state,
-              phone: schoolSettings.phone,
+              phone: numericPhone,
               email: schoolSettings.email,
             });
 
