@@ -49,33 +49,49 @@ export default function Configuracoes() {
         let settingsData = infoData?.[0] || null;
         let settingsError = infoError;
 
-        // If school_info fails or is empty, try site_settings
-        if (settingsError || !settingsData) {
-          console.log("school_info empty or errored, trying site_settings fallback...");
+        // If school_info fails (e.g. table not found), try site_settings
+        if (settingsError) {
+          console.log("school_info failed, trying site_settings fallback:", settingsError.message);
           const { data: fallbackData, error: fallbackError } = await supabase
             .from("site_settings")
             .select("*")
             .order('updated_at', { ascending: false })
             .limit(1);
 
-          if (!fallbackError && fallbackData && fallbackData.length > 0) {
-            settingsData = fallbackData[0];
+          if (!fallbackError) {
+            // If site_settings successful (even if empty), we clear the previous error
+            settingsData = fallbackData?.[0] || null;
             settingsError = null;
+          } else {
+            // Both failed
+            settingsError = fallbackError;
           }
         }
 
-        if (settingsError) {
-          console.error("Error fetching settings:", settingsError);
-          toast.error("Erro ao carregar dados da escola: " + settingsError.message);
+        // If both exist but are empty, or if we cleared error but found no row
+        if (!settingsError && !settingsData) {
+          console.log("No settings found in either table, using defaults.");
+          setSchoolSettings({
+            id: SETTINGS_ID,
+            school_name: "Acompanhamento Escolar",
+            address: "",
+            city: "",
+            state: "",
+            phone: "",
+            email: "",
+          });
+        } else if (settingsError) {
+          console.error("Critical error fetching settings:", settingsError);
+          toast.error("Erro ao carregar dados da escola. Verifique as tabelas no Supabase.");
         } else if (settingsData) {
-          console.log("School settings loaded:", settingsData);
+          console.log("School settings loaded successfully:", settingsData);
           setSchoolSettings({
             id: settingsData.id,
             school_name: settingsData.school_name || "Acompanhamento Escolar",
             address: settingsData.address || "",
             city: settingsData.city || "",
             state: settingsData.state || "",
-            phone: settingsData.phone || "",
+            phone: String(settingsData.phone || ""),
             email: settingsData.email || "",
           });
         }
