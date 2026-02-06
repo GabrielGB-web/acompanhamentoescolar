@@ -62,6 +62,17 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
           .insert({ user_id: data.user.id, role: formData.role });
 
         if (roleError) throw roleError;
+
+        // Add profile record for the new user
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            user_id: data.user.id,
+            name: formData.name,
+            email: formData.email,
+          });
+
+        if (profileError) throw profileError;
       }
 
       toast.success(`Usuário ${formData.name} criado com sucesso!`);
