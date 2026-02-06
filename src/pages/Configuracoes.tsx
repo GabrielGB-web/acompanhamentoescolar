@@ -43,6 +43,7 @@ export default function Configuracoes() {
         const { data: infoData, error: infoError } = await supabase
           .from("school_info")
           .select("*")
+          .order('updated_at', { ascending: false })
           .limit(1);
 
         let settingsData = infoData?.[0] || null;
@@ -54,6 +55,7 @@ export default function Configuracoes() {
           const { data: fallbackData, error: fallbackError } = await supabase
             .from("site_settings")
             .select("*")
+            .order('updated_at', { ascending: false })
             .limit(1);
 
           if (!fallbackError && fallbackData && fallbackData.length > 0) {
@@ -127,6 +129,10 @@ export default function Configuracoes() {
 
         if (settingsError) {
           console.error("Error saving to school_info, trying site_settings:", settingsError);
+
+          // Sanitizamos o telefone (apenas números) para o caso de a tabela site_settings usar tipo numérico
+          const numericPhone = schoolSettings.phone.replace(/\D/g, "");
+
           // Fallback save to site_settings if school_info fails
           const { error: fallbackError } = await supabase
             .from("site_settings")
@@ -136,7 +142,7 @@ export default function Configuracoes() {
               address: schoolSettings.address,
               city: schoolSettings.city,
               state: schoolSettings.state,
-              phone: schoolSettings.phone,
+              phone: numericPhone,
               email: schoolSettings.email,
             });
 
