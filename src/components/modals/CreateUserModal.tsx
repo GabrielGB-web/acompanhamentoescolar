@@ -33,8 +33,8 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
+    if (formData.password.length < 3) {
+      toast.error("A senha deve ter pelo menos 3 caracteres.");
       return;
     }
 
@@ -61,18 +61,10 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
           .from("user_roles")
           .insert({ user_id: data.user.id, role: formData.role });
 
-        if (roleError) throw roleError;
-
-        // Add profile record for the new user
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            user_id: data.user.id,
-            name: formData.name,
-            email: formData.email,
-          });
-
-        if (profileError) throw profileError;
+        if (roleError) {
+          console.error("Error setting user role:", roleError);
+          throw new Error("Usuário criado, mas erro ao atribuir função: " + roleError.message);
+        }
       }
 
       toast.success(`Usuário ${formData.name} criado com sucesso!`);
@@ -133,7 +125,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 3 caracteres"
                 required
               />
               <button
