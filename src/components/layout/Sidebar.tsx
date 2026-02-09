@@ -20,10 +20,10 @@ import escolaLogo from "@/assets/escola-logo.png";
 const allMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", adminOnly: false },
   { icon: Users, label: "Alunos", path: "/alunos", adminOnly: false },
-  { icon: GraduationCap, label: "Professores", path: "/professores", adminOnly: false },
+  { icon: GraduationCap, label: "Professores", path: "/professores", adminOnly: true },
   { icon: Calendar, label: "Aulas", path: "/aulas", adminOnly: false },
   { icon: Wallet, label: "Financeiro", path: "/financeiro", adminOnly: true },
-  { icon: Receipt, label: "Recibos", path: "/recibos", adminOnly: false },
+  { icon: Receipt, label: "Recibos", path: "/recibos", adminOnly: true },
   { icon: Settings, label: "Configurações", path: "/configuracoes", adminOnly: false },
 ];
 
@@ -66,10 +66,10 @@ export function Sidebar() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-24 items-center justify-center border-b border-sidebar-border px-2">
-            <img 
-              src={escolaLogo} 
-              alt="Logo Escolar" 
-              className={cn("object-contain transition-all max-w-full", isCollapsed ? "h-12 w-12" : "h-20")} 
+            <img
+              src={escolaLogo}
+              alt="Logo Escolar"
+              className={cn("object-contain transition-all max-w-full", isCollapsed ? "h-12 w-12" : "h-20")}
             />
           </div>
 
