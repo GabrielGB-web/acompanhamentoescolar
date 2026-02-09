@@ -237,6 +237,11 @@ export default function Aulas() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                    {lesson.status === "concluída" && lesson.feedback && (
+                      <div className="mt-2 w-full rounded-lg bg-muted/50 p-3 text-sm italic text-muted-foreground">
+                        <span className="font-semibold not-italic text-foreground">Feedback:</span> "{lesson.feedback}"
+                      </div>
+                    )}
                   </div>
                 ))
               )}

@@ -24,6 +24,7 @@ interface Lesson {
   lesson_duration: string;
   lesson_status: string;
   teacher_name: string;
+  lesson_feedback?: string;
 }
 
 interface Student {
@@ -142,10 +143,10 @@ export default function AgendaPublica() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <img 
-                src={escolaLogo} 
-                alt="Logo Escolar" 
-                className="h-16 object-contain" 
+              <img
+                src={escolaLogo}
+                alt="Logo Escolar"
+                className="h-16 object-contain"
               />
               <div className="border-l pl-4">
                 <h1 className="text-xl font-bold">{student?.student_name}</h1>
@@ -195,37 +196,44 @@ export default function AgendaPublica() {
             ) : (
               <div className="space-y-4">
                 {weekLessons.map((lesson) => (
-                  <div
-                    key={lesson.lesson_id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="rounded-lg bg-primary/10 p-3">
-                        <BookOpen className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{lesson.lesson_subject}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {format(parseISO(lesson.lesson_date), "EEEE, dd/MM", { locale: ptBR })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {lesson.lesson_time.slice(0, 5)} ({lesson.lesson_duration})
-                          </span>
+                  <div key={lesson.lesson_id} className="space-y-4">
+                    <div
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="rounded-lg bg-primary/10 p-3">
+                          <BookOpen className="h-5 w-5 text-primary" />
                         </div>
-                        {lesson.teacher_name && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                            <User className="h-3 w-3" />
-                            Prof. {lesson.teacher_name}
-                          </p>
-                        )}
+                        <div>
+                          <h3 className="font-semibold">{lesson.lesson_subject}</h3>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {format(parseISO(lesson.lesson_date), "EEEE, dd/MM", { locale: ptBR })}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {lesson.lesson_time.slice(0, 5)} ({lesson.lesson_duration})
+                            </span>
+                          </div>
+                          {lesson.teacher_name && (
+                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                              <User className="h-3 w-3" />
+                              Prof. {lesson.teacher_name}
+                            </p>
+                          )}
+                        </div>
                       </div>
+                      <Badge variant={statusConfig[lesson.lesson_status]?.variant || "default"}>
+                        {statusConfig[lesson.lesson_status]?.label || lesson.lesson_status}
+                      </Badge>
                     </div>
-                    <Badge variant={statusConfig[lesson.lesson_status]?.variant || "default"}>
-                      {statusConfig[lesson.lesson_status]?.label || lesson.lesson_status}
-                    </Badge>
+                    {lesson.lesson_status === "concluída" && lesson.lesson_feedback && (
+                      <div className="p-3 rounded-lg bg-success/5 border border-success/10 text-sm italic text-muted-foreground">
+                        <p className="font-semibold not-italic text-success mb-1">Feedback do Professor:</p>
+                        "{lesson.lesson_feedback}"
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

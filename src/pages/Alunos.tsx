@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, MoreVertical, Mail, Phone, Link, Copy, Check } from "lucide-react";
+import { Plus, Search, MoreVertical, Mail, Phone, Link, Copy, Check, Pencil } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ export default function Alunos() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingStudent, setEditingStudent] = useState<any | null>(null);
 
   const { data: students = [], isLoading } = useStudents();
   const deleteStudent = useDeleteStudent();
@@ -116,6 +117,15 @@ export default function Alunos() {
                           <Link className="h-4 w-4 mr-2" />
                           {student.access_code ? "Copiar link da agenda" : "Sem código de acesso"}
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditingStudent(student);
+                            setIsModalOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => setDeletingId(student.id)}>Excluir</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -139,7 +149,14 @@ export default function Alunos() {
         )}
       </div>
 
-      <StudentModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+      <StudentModal
+        open={isModalOpen}
+        onOpenChange={(open) => {
+          setIsModalOpen(open);
+          if (!open) setEditingStudent(null);
+        }}
+        student={editingStudent}
+      />
 
       <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>

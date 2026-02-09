@@ -32,7 +32,7 @@ export function useStudents() {
         .from("students")
         .select("*")
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data as Student[];
     },
@@ -41,7 +41,7 @@ export function useStudents() {
 
 export function useCreateStudent() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (formData: StudentFormData) => {
       const { data, error } = await supabase
@@ -49,7 +49,7 @@ export function useCreateStudent() {
         .insert([formData])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -63,16 +63,41 @@ export function useCreateStudent() {
   });
 }
 
+export function useUpdateStudent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...formData }: StudentFormData & { id: string }) => {
+      const { data, error } = await supabase
+        .from("students")
+        .update(formData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      toast.success("Aluno atualizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar aluno: " + error.message);
+    },
+  });
+}
+
 export function useDeleteStudent() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("students")
         .delete()
         .eq("id", id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
