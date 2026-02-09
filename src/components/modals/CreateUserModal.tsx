@@ -79,6 +79,8 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
         toast.error("Este email já está cadastrado.");
       } else if (errorMessage.includes("weak") || errorMessage.includes("easy to guess")) {
         toast.error("A senha escolhida é considerada fraca ou muito comum. Por favor, escolha uma senha mais forte (use letras, números e símbolos).");
+      } else if (errorMessage.includes("email rate limit exceeded")) {
+        toast.error("Limite de criação de usuários atingido para este período. Por favor, aguarde alguns minutos ou desative a confirmação de email no Dashboard do Supabase (Authentication > Settings > Email Auth).");
       } else {
         toast.error("Erro ao criar usuário: " + error.message);
       }

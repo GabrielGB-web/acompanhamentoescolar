@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreateStudent } from "@/hooks/useStudents";
+import { useCreateStudent, useUpdateStudent, Student } from "@/hooks/useStudents";
 
 interface StudentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  student?: Student | null;
 }
 
-export function StudentModal({ open, onOpenChange }: StudentModalProps) {
+export function StudentModal({ open, onOpenChange, student }: StudentModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -22,30 +23,58 @@ export function StudentModal({ open, onOpenChange }: StudentModalProps) {
   });
 
   const createStudent = useCreateStudent();
+  const updateStudent = useUpdateStudent();
+
+  useEffect(() => {
+    if (student) {
+      setFormData({
+        name: student.name || "",
+        email: student.email || "",
+        phone: student.phone || "",
+        grade: student.grade || "",
+        responsibleName: student.responsible_name || "",
+        responsiblePhone: student.responsible_phone || "",
+      });
+    } else {
+      setFormData({ name: "", email: "", phone: "", grade: "", responsibleName: "", responsiblePhone: "" });
+    }
+  }, [student, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    createStudent.mutate({
+
+    const payload = {
       name: formData.name,
-      email: formData.email || undefined,
-      phone: formData.phone || undefined,
-      grade: formData.grade || undefined,
-      responsible_name: formData.responsibleName || undefined,
-      responsible_phone: formData.responsiblePhone || undefined,
-    }, {
-      onSuccess: () => {
-        onOpenChange(false);
-        setFormData({ name: "", email: "", phone: "", grade: "", responsibleName: "", responsiblePhone: "" });
-      },
-    });
+      email: formData.email || null,
+      phone: formData.phone || null,
+      grade: formData.grade || null,
+      responsible_name: formData.responsibleName || null,
+      responsible_phone: formData.responsiblePhone || null,
+    };
+
+    if (student) {
+      updateStudent.mutate({ id: student.id, ...payload }, {
+        onSuccess: () => {
+          onOpenChange(false);
+        },
+      });
+    } else {
+      createStudent.mutate(payload, {
+        onSuccess: () => {
+          onOpenChange(false);
+          setFormData({ name: "", email: "", phone: "", grade: "", responsibleName: "", responsiblePhone: "" });
+        },
+      });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">Novo Aluno</DialogTitle>
+          <DialogTitle className="font-display text-xl">
+            {student ? "Editar Aluno" : "Novo Aluno"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -128,8 +157,8 @@ export function StudentModal({ open, onOpenChange }: StudentModalProps) {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={createStudent.isPending}>
-              {createStudent.isPending ? "Salvando..." : "Cadastrar Aluno"}
+            <Button type="submit" disabled={createStudent.isPending || updateStudent.isPending}>
+              {createStudent.isPending || updateStudent.isPending ? "Salvando..." : student ? "Salvar Alterações" : "Cadastrar Aluno"}
             </Button>
           </div>
         </form>
