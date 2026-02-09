@@ -11,12 +11,24 @@ import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useGrades, useCreateGrade, useDeleteGrade } from "@/hooks/useGrades";
+import { useSubjects, useCreateSubject, useDeleteSubject } from "@/hooks/useSubjects";
+import { Plus, Trash2 } from "lucide-react";
 
 export default function Configuracoes() {
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const { isAdmin, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [newGrade, setNewGrade] = useState("");
+  const [newSubject, setNewSubject] = useState("");
+
+  const { data: grades = [] } = useGrades();
+  const { data: subjects = [] } = useSubjects();
+  const createGrade = useCreateGrade();
+  const deleteGrade = useDeleteGrade();
+  const createSubject = useCreateSubject();
+  const deleteSubject = useDeleteSubject();
 
   const [schoolSettings, setSchoolSettings] = useState({
     id: "",
@@ -403,6 +415,97 @@ export default function Configuracoes() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Dynamic Options Management - Admin Only */}
+          {isAdmin && (
+            <>
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-primary">
+                    <Building className="h-5 w-5" />
+                    Gerenciar Séries/Anos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ex: 6º Ano"
+                      value={newGrade}
+                      onChange={(e) => setNewGrade(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (newGrade.trim()) {
+                          createGrade.mutate(newGrade.trim(), { onSuccess: () => setNewGrade("") });
+                        }
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 divide-y rounded-md border">
+                    {grades.map((grade) => (
+                      <div key={grade.id} className="flex items-center justify-between p-2">
+                        <span className="text-sm">{grade.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10"
+                          onClick={() => deleteGrade.mutate(grade.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-primary">
+                    <Users className="h-5 w-5" />
+                    Gerenciar Matérias
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ex: Física"
+                      value={newSubject}
+                      onChange={(e) => setNewSubject(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (newSubject.trim()) {
+                          createSubject.mutate(newSubject.trim(), { onSuccess: () => setNewSubject("") });
+                        }
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 divide-y rounded-md border">
+                    {subjects.map((subject) => (
+                      <div key={subject.id} className="flex items-center justify-between p-2">
+                        <span className="text-sm">{subject.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10"
+                          onClick={() => deleteSubject.mutate(subject.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
       </div>

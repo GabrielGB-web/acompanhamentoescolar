@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateStudent, useUpdateStudent, Student } from "@/hooks/useStudents";
+import { useGrades } from "@/hooks/useGrades";
 
 interface StudentModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function StudentModal({ open, onOpenChange, student }: StudentModalProps)
 
   const createStudent = useCreateStudent();
   const updateStudent = useUpdateStudent();
+  const { data: grades = [] } = useGrades();
 
   useEffect(() => {
     if (student) {
@@ -98,13 +100,11 @@ export function StudentModal({ open, onOpenChange, student }: StudentModalProps)
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="6º Ano">6º Ano</SelectItem>
-                  <SelectItem value="7º Ano">7º Ano</SelectItem>
-                  <SelectItem value="8º Ano">8º Ano</SelectItem>
-                  <SelectItem value="9º Ano">9º Ano</SelectItem>
-                  <SelectItem value="1º Ano EM">1º Ano EM</SelectItem>
-                  <SelectItem value="2º Ano EM">2º Ano EM</SelectItem>
-                  <SelectItem value="3º Ano EM">3º Ano EM</SelectItem>
+                  {grades.map((grade) => (
+                    <SelectItem key={grade.id} value={grade.name}>
+                      {grade.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
