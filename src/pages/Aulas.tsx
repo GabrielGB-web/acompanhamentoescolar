@@ -26,6 +26,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const statusStyles = {
   agendada: "bg-primary/10 text-primary",
@@ -38,6 +47,9 @@ export default function Aulas() {
   const [activeTab, setActiveTab] = useState("todas");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
   const { data: lessons = [], isLoading } = useLessons();
   const updateStatus = useUpdateLessonStatus();
@@ -56,7 +68,25 @@ export default function Aulas() {
   });
 
   const handleStatusChange = (id: string, status: "agendada" | "concluída" | "cancelada") => {
-    updateStatus.mutate({ id, status });
+    if (status === "concluída") {
+      setSelectedLessonId(id);
+      setIsFeedbackModalOpen(true);
+    } else {
+      updateStatus.mutate({ id, status });
+    }
+  };
+
+  const handleFeedbackSubmit = () => {
+    if (selectedLessonId) {
+      updateStatus.mutate({
+        id: selectedLessonId,
+        status: "concluída",
+        feedback: feedbackText
+      });
+      setIsFeedbackModalOpen(false);
+      setFeedbackText("");
+      setSelectedLessonId(null);
+    }
   };
 
   const confirmDelete = () => {
@@ -120,8 +150,8 @@ export default function Aulas() {
                 </div>
               ) : filteredLessons.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
-                  {searchTerm || activeTab !== "todas" 
-                    ? "Nenhuma aula encontrada" 
+                  {searchTerm || activeTab !== "todas"
+                    ? "Nenhuma aula encontrada"
                     : "Nenhuma aula agendada. Clique em 'Agendar Aula' para começar."}
                 </div>
               ) : (
@@ -198,7 +228,7 @@ export default function Aulas() {
                               <DropdownMenuSeparator />
                             </>
                           )}
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => setDeletingId(lesson.id)}
                           >
@@ -233,6 +263,37 @@ export default function Aulas() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isFeedbackModalOpen} onOpenChange={setIsFeedbackModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Feedback da Aula</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="feedback">Como foi o desempenho do aluno?</Label>
+              <Textarea
+                id="feedback"
+                placeholder="Digite aqui observações sobre o conteúdo visto, dificuldades ou progresso..."
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsFeedbackModalOpen(false)}>
+              Pular
+            </Button>
+            <Button
+              onClick={handleFeedbackSubmit}
+              disabled={updateStatus.isPending}
+            >
+              Confirmar e Concluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }

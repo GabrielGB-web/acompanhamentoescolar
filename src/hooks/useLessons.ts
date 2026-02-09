@@ -11,6 +11,7 @@ export interface Lesson {
   time: string;
   duration: string;
   status: "agendada" | "concluída" | "cancelada";
+  feedback?: string;
   created_at: string;
   updated_at: string;
   students?: { id: string; name: string };
@@ -38,7 +39,7 @@ export function useLessons() {
           teachers (id, name)
         `)
         .order("date", { ascending: false });
-      
+
       if (error) throw error;
       return data as Lesson[];
     },
@@ -47,7 +48,7 @@ export function useLessons() {
 
 export function useCreateLesson() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (formData: LessonFormData) => {
       const { data, error } = await supabase
@@ -55,7 +56,7 @@ export function useCreateLesson() {
         .insert([formData])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -71,16 +72,16 @@ export function useCreateLesson() {
 
 export function useUpdateLessonStatus() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: "agendada" | "concluída" | "cancelada" }) => {
+    mutationFn: async ({ id, status, feedback }: { id: string; status: "agendada" | "concluída" | "cancelada"; feedback?: string }) => {
       const { data, error } = await supabase
         .from("lessons")
-        .update({ status })
+        .update({ status, feedback })
         .eq("id", id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -96,14 +97,14 @@ export function useUpdateLessonStatus() {
 
 export function useDeleteLesson() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("lessons")
         .delete()
         .eq("id", id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {

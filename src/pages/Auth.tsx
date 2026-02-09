@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Email inválido");
-const passwordSchema = z.string().min(6, "Senha deve ter no mínimo 6 caracteres");
+const passwordSchema = z.string().min(3, "Senha deve ter no mínimo 3 caracteres");
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -55,8 +55,8 @@ export default function Auth() {
     if (error) {
       toast({
         title: "Erro ao entrar",
-        description: error.message === "Invalid login credentials" 
-          ? "Email ou senha incorretos" 
+        description: error.message === "Invalid login credentials"
+          ? "Email ou senha incorretos"
           : error.message,
         variant: "destructive",
       });
@@ -116,7 +116,7 @@ export default function Auth() {
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
-          
+
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Novos usuários devem ser cadastrados por um administrador.
           </p>
