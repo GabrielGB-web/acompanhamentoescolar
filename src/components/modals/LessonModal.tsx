@@ -7,13 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useStudents } from "@/hooks/useStudents";
 import { useTeachers } from "@/hooks/useTeachers";
 import { useCreateLesson } from "@/hooks/useLessons";
+import { useSubjects } from "@/hooks/useSubjects";
 
 interface LessonModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const subjects = ["Matemática", "Português", "Física", "Química", "Biologia", "História", "Geografia", "Inglês", "Redação"];
 
 export function LessonModal({ open, onOpenChange }: LessonModalProps) {
   const [formData, setFormData] = useState({
@@ -27,11 +26,12 @@ export function LessonModal({ open, onOpenChange }: LessonModalProps) {
 
   const { data: students = [] } = useStudents();
   const { data: teachers = [] } = useTeachers();
+  const { data: subjects = [] } = useSubjects();
   const createLesson = useCreateLesson();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     createLesson.mutate({
       student_id: formData.student_id,
       teacher_id: formData.teacher_id,
@@ -116,8 +116,8 @@ export function LessonModal({ open, onOpenChange }: LessonModalProps) {
               </SelectTrigger>
               <SelectContent>
                 {subjects.map((subject) => (
-                  <SelectItem key={subject} value={subject}>
-                    {subject}
+                  <SelectItem key={subject.id} value={subject.name}>
+                    {subject.name}
                   </SelectItem>
                 ))}
               </SelectContent>
