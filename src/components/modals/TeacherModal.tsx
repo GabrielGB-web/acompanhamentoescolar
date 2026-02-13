@@ -5,23 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateTeacher } from "@/hooks/useTeachers";
+import { useSubjects } from "@/hooks/useSubjects";
 
 interface TeacherModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const subjects = [
-  "Matemática",
-  "Português",
-  "Física",
-  "Química",
-  "Biologia",
-  "História",
-  "Geografia",
-  "Inglês",
-  "Redação",
-];
 
 export function TeacherModal({ open, onOpenChange }: TeacherModalProps) {
   const [formData, setFormData] = useState({
@@ -31,6 +21,7 @@ export function TeacherModal({ open, onOpenChange }: TeacherModalProps) {
     subjects: [] as string[],
   });
 
+  const { data: subjects = [] } = useSubjects();
   const createTeacher = useCreateTeacher();
 
   const handleSubjectChange = (subject: string, checked: boolean) => {
@@ -43,7 +34,7 @@ export function TeacherModal({ open, onOpenChange }: TeacherModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     createTeacher.mutate({
       name: formData.name,
       email: formData.email,
@@ -103,17 +94,17 @@ export function TeacherModal({ open, onOpenChange }: TeacherModalProps) {
             <Label>Disciplinas</Label>
             <div className="grid grid-cols-3 gap-2">
               {subjects.map((subject) => (
-                <div key={subject} className="flex items-center space-x-2">
+                <div key={subject.id} className="flex items-center space-x-2">
                   <Checkbox
-                    id={subject}
-                    checked={formData.subjects.includes(subject)}
-                    onCheckedChange={(checked) => handleSubjectChange(subject, checked as boolean)}
+                    id={subject.id}
+                    checked={formData.subjects.includes(subject.name)}
+                    onCheckedChange={(checked) => handleSubjectChange(subject.name, checked as boolean)}
                   />
                   <label
-                    htmlFor={subject}
+                    htmlFor={subject.id}
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    {subject}
+                    {subject.name}
                   </label>
                 </div>
               ))}
