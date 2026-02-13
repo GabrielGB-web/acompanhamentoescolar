@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useUpdateTeacher, Teacher } from "@/hooks/useTeachers";
+import { useSubjects } from "@/hooks/useSubjects";
 
 interface EditTeacherModalProps {
   open: boolean;
@@ -12,17 +13,6 @@ interface EditTeacherModalProps {
   teacher: Teacher | null;
 }
 
-const subjects = [
-  "Matemática",
-  "Português",
-  "Física",
-  "Química",
-  "Biologia",
-  "História",
-  "Geografia",
-  "Inglês",
-  "Redação",
-];
 
 export function EditTeacherModal({ open, onOpenChange, teacher }: EditTeacherModalProps) {
   const [formData, setFormData] = useState({
@@ -32,6 +22,7 @@ export function EditTeacherModal({ open, onOpenChange, teacher }: EditTeacherMod
     subjects: [] as string[],
   });
 
+  const { data: subjects = [] } = useSubjects();
   const updateTeacher = useUpdateTeacher();
 
   useEffect(() => {
@@ -56,7 +47,7 @@ export function EditTeacherModal({ open, onOpenChange, teacher }: EditTeacherMod
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!teacher) return;
-    
+
     updateTeacher.mutate({
       id: teacher.id,
       data: {
@@ -118,17 +109,17 @@ export function EditTeacherModal({ open, onOpenChange, teacher }: EditTeacherMod
             <Label>Disciplinas</Label>
             <div className="grid grid-cols-3 gap-2">
               {subjects.map((subject) => (
-                <div key={subject} className="flex items-center space-x-2">
+                <div key={subject.id} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`edit-${subject}`}
-                    checked={formData.subjects.includes(subject)}
-                    onCheckedChange={(checked) => handleSubjectChange(subject, checked as boolean)}
+                    id={`edit-${subject.id}`}
+                    checked={formData.subjects.includes(subject.name)}
+                    onCheckedChange={(checked) => handleSubjectChange(subject.name, checked as boolean)}
                   />
                   <label
-                    htmlFor={`edit-${subject}`}
+                    htmlFor={`edit-${subject.id}`}
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    {subject}
+                    {subject.name}
                   </label>
                 </div>
               ))}
